@@ -1,0 +1,389 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+/* ============================================
+   NOC FMI — Design System
+   Theme: Industrial Clarity
+   Clean, data-forward, professional
+   ============================================ */
+
+:root {
+  /* Core Background */
+  --bg-base:        #f4f6f9;
+  --bg-surface:     #ffffff;
+  --bg-elevated:    #ffffff;
+  --bg-subtle:      #eef1f6;
+
+  /* Sidebar */
+  --sidebar-bg:       #0f1621;
+  --sidebar-border:   #1e2a3a;
+  --sidebar-hover:    #1a2535;
+  --sidebar-active:   #1a4d8f;
+  --sidebar-text:     #8a9bb5;
+  --sidebar-text-dim: #4a5e78;
+
+  /* Brand Blue — calm, not neon */
+  --blue-50:  #eef4ff;
+  --blue-100: #dce8ff;
+  --blue-400: #5a9cf6;
+  --blue-500: #2d7dd2;
+  --blue-600: #1a5fad;
+  --blue-700: #0e4a8c;
+
+  /* Neutrals */
+  --slate-50:  #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+
+  /* Semantic */
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger:  #dc2626;
+  --info:    #0284c7;
+
+  /* Text */
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+
+  /* Borders */
+  --border-light: #e8ecf2;
+  --border-mid:   #d1d9e0;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(15, 22, 33, 0.06), 0 1px 2px rgba(15, 22, 33, 0.04);
+  --shadow-md:  0 4px 12px rgba(15, 22, 33, 0.08), 0 2px 6px rgba(15, 22, 33, 0.05);
+  --shadow-lg:  0 8px 24px rgba(15, 22, 33, 0.10), 0 4px 10px rgba(15, 22, 33, 0.06);
+
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+  --font-sans: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+/* ============================================
+   BASE RESET & BODY
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+}
+
+/* ============================================
+   SCROLLBAR — subtle & clean
+   ============================================ */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--slate-300);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--slate-400);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--sidebar-border);
+}
+
+/* ============================================
+   TABLE COMPONENT
+   ============================================ */
+@layer components {
+  .table-container {
+    @apply w-full overflow-x-auto rounded-xl bg-white;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    @apply min-w-[600px] md:min-w-full w-full border-collapse;
+    font-size: 13px;
+  }
+
+  thead tr {
+    background: var(--bg-subtle);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  thead th {
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.12s ease;
+  }
+
+  tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: var(--bg-subtle);
+  }
+
+  tbody td {
+    padding: 11px 16px;
+    color: var(--text-primary);
+    vertical-align: middle;
+  }
+}
+
+/* ============================================
+   CARD COMPONENT
+   ============================================ */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ============================================
+   STAT CARD
+   ============================================ */
+.stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--blue-500), var(--blue-400));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-card:hover::before {
+  opacity: 1;
+}
+
+/* ============================================
+   BADGE / STATUS
+   ============================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badge-blue    { background: var(--blue-50);   color: var(--blue-600); }
+.badge-green   { background: #f0fdf4;           color: #15803d; }
+.badge-amber   { background: #fffbeb;           color: #b45309; }
+.badge-red     { background: #fff1f2;           color: #be123c; }
+.badge-slate   { background: var(--bg-subtle);  color: var(--text-secondary); }
+
+/* ============================================
+   BUTTON
+   ============================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  outline: none;
+  font-family: var(--font-sans);
+}
+
+.btn-primary {
+  background: var(--blue-600);
+  color: white;
+  box-shadow: 0 1px 3px rgba(29, 78, 216, 0.3);
+}
+.btn-primary:hover {
+  background: var(--blue-700);
+  box-shadow: 0 3px 8px rgba(29, 78, 216, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-mid);
+}
+.btn-secondary:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   INPUT
+   ============================================ */
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-mid);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(45, 125, 210, 0.12);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ============================================
+   PAGE HEADER
+   ============================================ */
+.page-header {
+  padding: 24px 28px 0;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ============================================
+   SECTION LABEL
+   ============================================ */
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sidebar-text-dim);
+  padding: 0 16px;
+  margin: 20px 0 6px;
+}
+
+/* ============================================
+   DIVIDER
+   ============================================ */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border-light);
+  margin: 16px 0;
+}
+
+/* ============================================
+   LOADING SKELETON
+   ============================================ */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-subtle) 25%,
+    var(--slate-200) 50%,
+    var(--bg-subtle) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 6px;
+}
+
+/* ============================================
+   FADE IN ANIMATION
+   ============================================ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fadeUp 0.3s ease forwards;
+}
+
+.fade-up-delay-1 { animation-delay: 0.05s; }
+.fade-up-delay-2 { animation-delay: 0.10s; }
+.fade-up-delay-3 { animation-delay: 0.15s; }
+.fade-up-delay-4 { animation-delay: 0.20s; }
