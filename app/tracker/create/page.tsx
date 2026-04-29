@@ -2,15 +2,107 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { 
-  Save, ArrowLeft, Loader2, TrendingUp, 
-  CheckCircle, UserPlus, List
+import {
+  Save, ArrowLeft, Loader2, TrendingUp,
+  CheckCircle, UserPlus, List, ChevronDown, X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { logActivity } from '@/lib/logger';
+
+// ─────────────────────────────────────────────
+// SEARCHABLE SELECT COMPONENT
+// ─────────────────────────────────────────────
+function SearchableSelect({
+  name, value, onChange, options, placeholder,
+}: {
+  name: string;
+  value: string;
+  onChange: (name: string, val: string) => void;
+  options: string[];
+  placeholder?: string;
+}) {
+  const [query, setQuery]     = useState(value);
+  const [open, setOpen]       = useState(false);
+  const ref                   = useRef<HTMLDivElement>(null);
+
+  // Sync query when value changes externally
+  useEffect(() => { setQuery(value); }, [value]);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = options.filter(o => o.toLowerCase().includes(query.toLowerCase()));
+
+  const select = (opt: string) => {
+    setQuery(opt);
+    onChange(name, opt);
+    setOpen(false);
+  };
+
+  const clear = () => {
+    setQuery('');
+    onChange(name, '');
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <div className="relative flex items-center">
+        <input
+          type="text"
+          value={query}
+          onChange={e => { setQuery(e.target.value); onChange(name, e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          placeholder={placeholder || '— Ketik untuk cari —'}
+          className="input pr-16"
+          autoComplete="off"
+        />
+        <div className="absolute right-2 flex items-center gap-1">
+          {query && (
+            <button type="button" onClick={clear} className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-slate-600 transition-colors">
+              <X size={12} />
+            </button>
+          )}
+          <button type="button" onClick={() => setOpen(o => !o)} className="p-1 rounded hover:bg-white/10 text-slate-400 transition-colors">
+            <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <div
+          className="absolute z-50 mt-1 w-full rounded-lg border shadow-xl overflow-hidden"
+          style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-mid)', maxHeight: 220 }}
+        >
+          <div className="overflow-y-auto" style={{ maxHeight: 220 }}>
+            {filtered.length === 0 ? (
+              <div className="px-3 py-2.5 text-xs text-slate-400 italic">Tidak ada hasil</div>
+            ) : (
+              filtered.map((opt, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onMouseDown={() => select(opt)}
+                  className={`w-full text-left px-3 py-2 text-sm transition-colors hover:bg-blue-500/10 hover:text-blue-400 ${opt === value ? 'bg-blue-500/15 text-blue-400 font-semibold' : 'text-slate-300'}`}
+                >
+                  {opt}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const TABLE_OPTIONS = [
   { label: 'Pelanggan Baru (Pasang)', value: 'Berlangganan 2026' },
@@ -74,6 +166,7 @@ function CreateTrackerContent() {
   }, [subjectFromWO]);
 
   const handleChange = (e: any) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleSelect = (name: string, val: string) => setFormData(prev => ({ ...prev, [name]: val }));
 
   const handleSave = async (e: any) => {
     e.preventDefault();
@@ -150,12 +243,12 @@ function CreateTrackerContent() {
   const selectedLabel = TABLE_OPTIONS.find(o => o.value === selectedTable)?.label || '';
 
   return (
-    <div className="w-full max-w-3xl" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+    <div className="w-full max-w-3xl" style={{ fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── SUCCESS MODAL ── */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
+          <div className="rounded-2xl shadow-xl w-full max-w-md overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-mid)' }}>
             <div className="p-7 text-center">
               <div className="w-14 h-14 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <CheckCircle size={26} className="text-emerald-600" />
@@ -207,7 +300,7 @@ function CreateTrackerContent() {
       <form onSubmit={handleSave} className="space-y-4">
 
         {/* ── KATEGORI SELECTOR ── */}
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+        <div className="rounded-xl p-4" style={{ background: 'var(--info-bg)', border: '1px solid rgba(56,189,248,0.2)' }}>
           <label className="text-[11px] font-bold text-blue-700 uppercase tracking-widest block mb-2">
             Kategori Transaksi
           </label>
@@ -260,28 +353,40 @@ function CreateTrackerContent() {
         <FormSection title="Detail Teknis">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField label="BTS">
-              <select name="BTS" value={formData['BTS']} onChange={handleChange} className="input bg-white">
-                <option value="">— Pilih BTS —</option>
-                {options.bts.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
-              </select>
+              <SearchableSelect
+                name="BTS"
+                value={formData['BTS']}
+                onChange={handleSelect}
+                options={options.bts}
+                placeholder="— Ketik untuk cari BTS —"
+              />
             </FormField>
             <FormField label="ISP">
-              <select name="ISP" value={formData['ISP']} onChange={handleChange} className="input bg-white">
-                <option value="">— Pilih ISP —</option>
-                {options.isp.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
-              </select>
+              <SearchableSelect
+                name="ISP"
+                value={formData['ISP']}
+                onChange={handleSelect}
+                options={options.isp}
+                placeholder="— Ketik untuk cari ISP —"
+              />
             </FormField>
             <FormField label="Device / Perangkat">
-              <select name="DEVICE" value={formData['DEVICE']} onChange={handleChange} className="input bg-white">
-                <option value="">— Pilih Device —</option>
-                {options.device.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
-              </select>
+              <SearchableSelect
+                name="DEVICE"
+                value={formData['DEVICE']}
+                onChange={handleSelect}
+                options={options.device}
+                placeholder="— Ketik untuk cari Device —"
+              />
             </FormField>
             <FormField label="Team Pelaksana">
-              <select name="TEAM" value={formData['TEAM']} onChange={handleChange} className="input bg-white">
-                <option value="">— Pilih Team —</option>
-                {options.team.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
-              </select>
+              <SearchableSelect
+                name="TEAM"
+                value={formData['TEAM']}
+                onChange={handleSelect}
+                options={options.team}
+                placeholder="— Ketik untuk cari Team —"
+              />
             </FormField>
           </div>
           <FormField label="Problem / Catatan">
@@ -297,7 +402,7 @@ function CreateTrackerContent() {
 
         {/* ── REASON (conditional) ── */}
         {isBerhenti && (
-          <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 space-y-3">
+          <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--danger-bg)', border: '1px solid rgba(248,113,113,0.2)' }}>
             <h3 className="text-[11px] font-bold text-rose-600 uppercase tracking-widest">
               Alasan {selectedLabel}
             </h3>
@@ -332,7 +437,7 @@ function CreateTrackerContent() {
 // ─────────────────────────────────────────────
 function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+    <div className="rounded-xl shadow-sm p-5 space-y-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-light)' }}>
       <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{title}</h3>
       {children}
     </div>
@@ -357,7 +462,7 @@ export default function CreateTrackerPage() {
   return (
     <div
       className="min-h-screen p-6 md:p-8 flex justify-center items-start"
-      style={{ background: '#f4f6f9', fontFamily: "'IBM Plex Sans', sans-serif" }}
+      style={{ background: 'var(--bg-base)', fontFamily: "'Inter', sans-serif" }}
     >
       <Suspense fallback={
         <div className="flex h-64 items-center justify-center">

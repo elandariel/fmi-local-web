@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { PERMISSIONS, hasAccess, Role } from '@/lib/permissions';
+import { logActivity, getActorName } from '@/lib/logger';
 
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -48,7 +49,7 @@ export default function ToolsPage() {
     return (
       <div
         className="p-6 md:p-8 min-h-screen"
-        style={{ background: '#f4f6f9', fontFamily: "'IBM Plex Sans', sans-serif" }}
+        style={{ background: 'var(--bg-base)', fontFamily: "'Inter', sans-serif" }}
       >
         <div className="max-w-4xl mx-auto">
 
@@ -114,7 +115,7 @@ export default function ToolsPage() {
   return (
     <div
       className="p-6 md:p-8 min-h-screen"
-      style={{ background: '#f4f6f9', fontFamily: "'IBM Plex Sans', sans-serif" }}
+      style={{ background: 'var(--bg-base)', fontFamily: "'Inter', sans-serif" }}
     >
       <div className="max-w-7xl mx-auto">
         <button
@@ -471,6 +472,13 @@ function WoDistributor({ userRole }: { userRole: Role | null }) {
       await Promise.all([...inboxPromises, woUpdate]);
       toast.success('Tiket berhasil didistribusikan!');
       fetchWO(); setSelectedWO([]); setSelectedTechs([]);
+      const actorName = await getActorName(supabase);
+      await logActivity({
+        activity: 'WO_DISTRIBUTE',
+        subject: `${woIds.length} WO → ${selectedTechs.join(', ')}`,
+        actor: actorName,
+        detail: `${woIds.length} WO didistribusikan ke ${selectedTechs.length} teknisi`,
+      });
     } catch (error: any) {
       toast.error('Gagal: ' + error.message);
     } finally {

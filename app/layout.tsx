@@ -7,26 +7,27 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import Header from '@/components/Header';
-import { hasAccess, PERMISSIONS, Role } from '@/lib/permissions';
-import { 
-  LayoutDashboard, Users, Activity, LineChart, Server, 
+import { hasAccess, PERMISSIONS, Role, can, PermissionKey } from '@/lib/permissions';
+import {
+  LayoutDashboard, Users, Activity, LineChart, Server,
   History, Menu, LogOut, ClipboardList, Wrench, Megaphone,
-  ShieldCheck, ShieldAlert, X, ChevronRight
+  ShieldCheck, ShieldAlert, X, ChevronRight, Network, Sliders
 } from 'lucide-react';
 
 import GlobalBroadcast from '@/components/GlobalBroadcast';
+import BroadcastTicker from '@/components/BroadcastTicker';
 import { Toaster } from 'sonner';
 
 // ─────────────────────────────────────────────
 // SIDEBAR ITEM
 // ─────────────────────────────────────────────
-function SidebarItem({ 
-  href, icon, label, show = true, onClick, collapsed 
-}: { 
-  href: string; 
-  icon: React.ReactNode; 
-  label: string; 
-  show?: boolean; 
+function SidebarItem({
+  href, icon, label, show = true, onClick, collapsed
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  show?: boolean;
   onClick?: () => void;
   collapsed?: boolean;
 }) {
@@ -36,33 +37,48 @@ function SidebarItem({
   if (!show) return null;
 
   return (
-    <Link href={href} onClick={onClick} title={collapsed ? label : undefined}>
-      <div className={`
-        flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 text-sm font-medium mb-0.5 relative group
-        ${isActive 
-          ? 'bg-[#1a4d8f] text-white shadow-sm' 
-          : 'text-[#8a9bb5] hover:bg-[#1a2535] hover:text-[#c8d6e8]'
-        }
-        ${collapsed ? 'justify-center px-0' : ''}
-      `}>
-        {/* Active indicator bar */}
+    <Link href={href} onClick={onClick}>
+      <div
+        className={`
+          relative flex items-center gap-3 rounded-xl transition-all duration-200 text-[13px] font-semibold mb-0.5 group
+          ${collapsed ? 'justify-center w-10 h-10 mx-auto' : 'px-3 py-2.5'}
+        `}
+        style={{ color: isActive ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)' }}
+      >
+        {/* Active background — BizLink cream pill */}
         {isActive && (
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-blue-400 rounded-r-full" />
+          <span
+            className="absolute inset-0 rounded-xl"
+            style={{ background: 'var(--sidebar-active-bg)' }}
+          />
         )}
-        
-        <span className={`shrink-0 ${isActive ? 'text-blue-200' : ''}`}>
+
+        {/* Hover background */}
+        {!isActive && (
+          <span className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/[0.06] transition-colors" />
+        )}
+
+        <span className="relative shrink-0 z-10">
           {icon}
         </span>
-        
+
         {!collapsed && (
-          <span className="truncate leading-none">{label}</span>
+          <span className="relative z-10 truncate leading-none">{label}</span>
         )}
 
         {/* Tooltip for collapsed mode */}
         {collapsed && (
-          <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity duration-150 shadow-lg">
+          <div
+            className="absolute left-full ml-3 px-3 py-1.5 text-xs font-semibold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-all duration-150"
+            style={{
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-mid)',
+              color: 'var(--text-primary)',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+          >
             {label}
-            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-800" />
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent" style={{ borderRightColor: 'var(--bg-elevated)' }} />
           </div>
         )}
       </div>
@@ -71,14 +87,22 @@ function SidebarItem({
 }
 
 // ─────────────────────────────────────────────
-// SECTION LABEL
+// NAV SECTION DIVIDER
 // ─────────────────────────────────────────────
 function NavSection({ label, collapsed }: { label: string; collapsed?: boolean }) {
   if (collapsed) {
-    return <div className="border-t border-[#1e2a3a] my-3 mx-2" />;
+    return (
+      <div
+        className="my-3 mx-auto w-6"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
+      />
+    );
   }
   return (
-    <p className="px-3 text-[10px] font-bold text-[#3d5269] uppercase tracking-widest mb-1 mt-5 select-none">
+    <p
+      className="px-3 text-[9.5px] font-bold uppercase tracking-[0.12em] mb-1 mt-5 select-none"
+      style={{ color: 'rgba(255,255,255,0.2)' }}
+    >
       {label}
     </p>
   );
@@ -88,48 +112,70 @@ function NavSection({ label, collapsed }: { label: string; collapsed?: boolean }
 // ROOT LAYOUT
 // ─────────────────────────────────────────────
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
-  const [userProfile, setUserProfile] = useState<{ name: string; role: Role | null }>({ name: 'Loading...', role: null });
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [sidebarOpen, setSidebarOpen]   = useState(false);
+  const [collapsed, setCollapsed]       = useState(false);
+  const [theme, setTheme]               = useState<'dark' | 'light'>('dark');
+  const [userProfile, setUserProfile]   = useState<{
+    name: string;
+    role: Role | null;
+    overrides: Record<string, boolean> | null;
+    rolePerms: Record<string, boolean> | null;
+  }>({ name: 'Loading...', role: null, overrides: null, rolePerms: null });
+  const [loading, setLoading]           = useState(true);
+
+  const router   = useRouter();
   const pathname = usePathname();
-  const isLoginPage = pathname === '/login';
+  const isLoginPage = pathname === '/login' || pathname === '/reset-password';
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
   );
 
-  // Handle mobile sidebar + desktop resize
+  // Load saved theme
+  useEffect(() => {
+    const saved = localStorage.getItem('noc-theme') as 'dark' | 'light' | null;
+    if (saved) setTheme(saved);
+  }, []);
+
+  // Mobile sidebar + resize
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setSidebarOpen(true);
-      } else {
-        setSidebarOpen(false);
-        setCollapsed(false);
-      }
+      if (window.innerWidth >= 768) setSidebarOpen(true);
+      else { setSidebarOpen(false); setCollapsed(false); }
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Load user
+  // Load user (including permission_overrides + role perms from DB)
   useEffect(() => {
     async function loadUser() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, role')
+          .select('full_name, role, permission_overrides')
           .eq('id', user.id)
           .single();
         if (profile) {
-          setUserProfile({ 
-            name: profile.full_name || user.email?.split('@')[0] || 'User', 
-            role: profile.role as Role 
+          const role = profile.role as Role;
+          // Fetch role-level permissions from roles table
+          let rolePerms: Record<string, boolean> | null = null;
+          if (role && role !== 'SUPER_DEV') {
+            const { data: roleRow } = await supabase
+              .from('roles')
+              .select('permissions')
+              .eq('name', role)
+              .single();
+            if (roleRow?.permissions) rolePerms = roleRow.permissions;
+          }
+          setUserProfile({
+            name: profile.full_name || user.email?.split('@')[0] || 'User',
+            role,
+            overrides: profile.permission_overrides ?? null,
+            rolePerms,
           });
         }
       } else if (!isLoginPage) {
@@ -140,10 +186,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     loadUser();
   }, [pathname, isLoginPage, router]);
 
+  // Helper — checks permission with overrides + role perms from DB
+  const userCan = (key: PermissionKey) =>
+    can(key, userProfile.role, userProfile.overrides ?? undefined, userProfile.rolePerms ?? undefined);
+
   const canAccessPage = () => {
     if (loading || isLoginPage) return true;
-    if (pathname.startsWith('/broadcast')) return hasAccess(userProfile.role, PERMISSIONS.BROADCAST_ACCESS);
-    if (pathname.startsWith('/manage-users')) return hasAccess(userProfile.role, PERMISSIONS.MANAGE_USERS);
+    if (pathname.startsWith('/broadcast'))    return userCan('broadcast.menu');
+    if (pathname.startsWith('/manage-users')) return userCan('team.menu');
+    if (pathname.startsWith('/manage-roles')) return userProfile.role === 'SUPER_DEV';
     return true;
   };
 
@@ -153,25 +204,36 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     router.refresh();
   };
 
-  const toggleSidebar = () => setSidebarOpen(prev => !prev);
-  const toggleCollapse = () => setCollapsed(prev => !prev);
-  const closeSidebarOnMobile = () => {
-    if (window.innerWidth < 768) setSidebarOpen(false);
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    localStorage.setItem('noc-theme', next);
   };
 
-  const sidebarWidth = collapsed ? 'w-16' : 'w-60';
+  const toggleSidebar        = () => setSidebarOpen(prev => !prev);
+  const toggleCollapse       = () => setCollapsed(prev => !prev);
+  const closeSidebarOnMobile = () => { if (window.innerWidth < 768) setSidebarOpen(false); };
+
+  const sidebarWidth = collapsed ? 'w-[68px]' : 'w-[232px]';
 
   return (
-    <html lang="en">
+    <html lang="id" data-theme={theme}>
       <body
         suppressHydrationWarning={true}
-        className={`
-          min-h-screen font-sans antialiased
-          ${isLoginPage ? 'bg-[#0f1621]' : 'bg-[#f4f6f9] flex overflow-hidden'}
-        `}
-        style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}
+        className={`min-h-screen antialiased ${isLoginPage ? '' : 'flex overflow-hidden'}`}
+        style={{ fontFamily: 'var(--font-sans)', background: 'var(--bg-base)', color: 'var(--text-primary)' }}
       >
-        <Toaster richColors position="top-center" />
+        <Toaster
+          richColors
+          position="top-center"
+          toastOptions={{
+            style: {
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-mid)',
+              color: 'var(--text-primary)',
+            }
+          }}
+        />
         <GlobalBroadcast />
 
         {isLoginPage ? (
@@ -181,43 +243,65 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* Mobile overlay */}
             {sidebarOpen && (
               <div
-                className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[55] md:hidden"
+                className="fixed inset-0 z-[55] md:hidden"
+                style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
                 onClick={toggleSidebar}
               />
             )}
 
-            {/* ── SIDEBAR ── */}
-            <aside className={`
-              fixed md:relative z-[60] h-screen bg-[#0f1621] text-white
-              flex flex-col flex-shrink-0 transition-all duration-300 ease-in-out
-              border-r border-[#1e2a3a] overflow-hidden
-              ${sidebarOpen
-                ? `${sidebarWidth} translate-x-0`
-                : 'w-0 -translate-x-full md:' + sidebarWidth + ' md:translate-x-0'
-              }
-            `}>
-
-              {/* Logo */}
-              <div className={`
-                flex items-center border-b border-[#1e2a3a] h-[64px] shrink-0 px-4
-                ${collapsed ? 'justify-center' : 'justify-between'}
-              `}>
-                <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shrink-0 shadow-md">
+            {/* ═══════════════════════════════════════
+                SIDEBAR
+                ═══════════════════════════════════════ */}
+            <aside
+              className={`
+                fixed md:relative z-[60] h-screen flex flex-col flex-shrink-0
+                transition-all duration-300 ease-in-out overflow-hidden
+                ${sidebarOpen
+                  ? `${sidebarWidth} translate-x-0`
+                  : 'w-0 -translate-x-full md:' + sidebarWidth + ' md:translate-x-0'
+                }
+              `}
+              style={{
+                background: 'var(--sidebar-bg)',
+                borderRight: '1px solid var(--sidebar-border)',
+              }}
+            >
+              {/* ── LOGO AREA ── */}
+              <div
+                className={`flex items-center h-[60px] shrink-0 px-4 ${collapsed ? 'justify-center' : 'justify-between'}`}
+                style={{ borderBottom: '1px solid var(--sidebar-border)' }}
+              >
+                <Link href="/" className="flex items-center gap-3 min-w-0 group" onClick={closeSidebarOnMobile}>
+                  {/* Logo */}
+                  <div
+                    className="shrink-0 rounded-xl overflow-hidden"
+                    style={{
+                      width: 34, height: 34,
+                      background: 'rgba(255,255,255,0.1)',
+                      padding: 2,
+                    }}
+                  >
                     <Image
                       src="/logo-fmi.jpg"
                       alt="NOC FMI"
-                      width={28}
-                      height={28}
-                      className="rounded-md object-cover"
+                      width={30}
+                      height={30}
+                      className="rounded-lg object-cover w-full h-full"
                     />
                   </div>
+
                   {!collapsed && (
                     <div className="min-w-0">
-                      <h1 className="font-black text-[15px] tracking-tight leading-none text-white">
-                        NOC <span className="text-blue-400">FMI</span>
+                      <h1
+                        className="font-black text-[15px] tracking-tight leading-none"
+                        style={{ letterSpacing: '-0.03em', color: 'var(--sidebar-active-bg)' }}
+                      >
+                        NOC FMI
                       </h1>
-                      <p className="text-[9px] text-[#3d5269] uppercase tracking-[0.15em] font-bold mt-0.5">
+                      <p
+                        className="font-bold mt-0.5"
+                        style={{ fontSize: 9, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}
+                      >
                         Network Operations
                       </p>
                     </div>
@@ -226,84 +310,115 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
                 {/* Close on mobile */}
                 {sidebarOpen && !collapsed && (
-                  <button onClick={toggleSidebar} className="md:hidden text-[#4a5e78] hover:text-white p-1 ml-1">
-                    <X size={18} />
+                  <button
+                    onClick={toggleSidebar}
+                    className="md:hidden p-1.5 rounded-lg transition-colors"
+                    style={{ color: 'rgba(255,255,255,0.3)' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'white')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
+                  >
+                    <X size={16} />
                   </button>
                 )}
               </div>
 
-              {/* Navigation */}
-              <nav className={`
-                flex-1 py-3 overflow-y-auto overflow-x-hidden custom-scrollbar
-                ${collapsed ? 'px-2' : 'px-3'}
-              `}>
+              {/* ── NAV ── */}
+              <nav
+                className={`flex-1 py-4 overflow-y-auto overflow-x-hidden custom-scrollbar ${collapsed ? 'px-2' : 'px-3'}`}
+              >
                 <NavSection label="Reporting" collapsed={collapsed} />
-                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/"             icon={<LayoutDashboard size={17} />} label="Dashboard" />
-                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/work-orders"  icon={<ClipboardList size={17} />}  label="Monthly Report" />
-                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/tracker"      icon={<LineChart size={17} />}      label="Weekly Report" />
+                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/"            icon={<LayoutDashboard size={16} />} label="Dashboard" />
+                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/work-orders" icon={<ClipboardList size={16} />}   label="Monthly Report Aktivator" />
+                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/tracker"     icon={<LineChart size={16} />}       label="Weekly Report Aktivator" />
+                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/NOC/report"  icon={<Network size={16} />}         label="Backbone Report NOC" />
 
                 <NavSection label="Database" collapsed={collapsed} />
-                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/vlan"  icon={<Server size={17} />}  label="VLAN Database" />
-                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/clients"      icon={<Users size={17} />}          label="Data Client" />
-                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/interkoneksi" icon={<Activity size={17} />}       label="Data Interkoneksi" />
+                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/vlan"         icon={<Server size={16} />}    label="VLAN Database" />
+                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/clients"      icon={<Users size={16} />}     label="Data Client" />
+                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/interkoneksi" icon={<Activity size={16} />}  label="Data Interkoneksi" />
 
-                <NavSection label="Log And Tools" collapsed={collapsed} />
-                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/logs"  icon={<History size={17} />} label="Activity Log" />
-                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/tools" icon={<Wrench size={17} />}  label="Tools & Utilities" />
+                <NavSection label="Log & Tools" collapsed={collapsed} />
+                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/logs"  icon={<History size={16} />} label="Activity Log" />
+                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/tools" icon={<Wrench size={16} />}  label="Tools & Utilities" />
 
-                <NavSection label="Access Control" collapsed={collapsed} />
+                <NavSection label="Access" collapsed={collapsed} />
                 <SidebarItem
                   collapsed={collapsed}
                   onClick={closeSidebarOnMobile}
                   href="/broadcast"
-                  icon={<Megaphone size={17} />}
+                  icon={<Megaphone size={16} />}
                   label="Broadcast Message"
-                  show={hasAccess(userProfile.role, PERMISSIONS.BROADCAST_ACCESS)}
+                  show={userCan('broadcast.menu')}
                 />
                 <SidebarItem
                   collapsed={collapsed}
                   onClick={closeSidebarOnMobile}
                   href="/manage-users"
-                  icon={<ShieldCheck size={17} className="text-amber-400" />}
+                  icon={<ShieldCheck size={16} style={{ color: '#fbbf24' }} />}
                   label="Team Management"
-                  show={hasAccess(userProfile.role, PERMISSIONS.MANAGE_USERS)}
+                  show={userCan('team.menu')}
+                />
+                <SidebarItem
+                  collapsed={collapsed}
+                  onClick={closeSidebarOnMobile}
+                  href="/manage-roles"
+                  icon={<Sliders size={16} style={{ color: '#c084fc' }} />}
+                  label="Role Management"
+                  show={userProfile.role === 'SUPER_DEV'}
                 />
               </nav>
 
-              {/* Profile + Collapse toggle */}
-              <div className="border-t border-[#1e2a3a] p-3 shrink-0 bg-[#0c1219]">
-                {/* Profile row */}
+              {/* ── FOOTER: Profile + Controls ── */}
+              <div
+                className="shrink-0 p-3"
+                style={{ borderTop: '1px solid var(--sidebar-border)', background: 'rgba(0,0,0,0.2)' }}
+              >
+                {/* Profile */}
                 <Link
                   href="/profile"
                   onClick={closeSidebarOnMobile}
-                  className={`
-                    flex items-center gap-3 rounded-lg p-2 
-                    hover:bg-[#1a2535] transition-colors group mb-2
-                    ${collapsed ? 'justify-center' : ''}
-                  `}
+                  className={`flex items-center gap-2.5 rounded-xl p-2 mb-2 group transition-all duration-150 ${collapsed ? 'justify-center' : ''}`}
+                  style={{ background: 'transparent' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   title={collapsed ? userProfile.name : undefined}
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-700 to-blue-500 flex-shrink-0 flex items-center justify-center text-xs font-bold text-white shadow-sm border border-[#1e2a3a]">
+                  {/* Avatar */}
+                  <div
+                    className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold"
+                    style={{
+                      background: 'var(--sidebar-active-bg)',
+                      color: 'var(--sidebar-active-text)',
+                      fontWeight: 800,
+                    }}
+                  >
                     {userProfile.name.charAt(0).toUpperCase()}
                   </div>
+
                   {!collapsed && (
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-white truncate leading-none">{userProfile.name}</p>
+                      <p className="text-[13px] font-semibold text-white truncate leading-none">
+                        {userProfile.name}
+                      </p>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <p className="text-[10px] text-[#4a5e78] font-bold uppercase tracking-wider">
+                        <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--sidebar-active-bg)', opacity: 0.7 }} />
+                        <p className="font-bold uppercase" style={{ fontSize: 9, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)' }}>
                           {userProfile.role || '…'}
                         </p>
                       </div>
                     </div>
                   )}
+
                   {!collapsed && (
                     <button
                       onClick={(e) => { e.preventDefault(); handleLogout(); }}
-                      className="p-1.5 text-[#4a5e78] hover:text-rose-400 hover:bg-[#1e2a3a] rounded-md transition-colors"
+                      className="p-1.5 rounded-lg transition-colors"
+                      style={{ color: 'rgba(255,255,255,0.25)' }}
+                      onMouseEnter={e => { e.currentTarget.style.color = '#f87171'; e.currentTarget.style.background = 'rgba(248,113,113,0.1)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.25)'; e.currentTarget.style.background = 'transparent'; }}
                       title="Logout"
                     >
-                      <LogOut size={15} />
+                      <LogOut size={14} />
                     </button>
                   )}
                 </Link>
@@ -311,45 +426,59 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {/* Collapse toggle — desktop only */}
                 <button
                   onClick={toggleCollapse}
-                  className={`
-                    hidden md:flex w-full items-center justify-center gap-2
-                    py-1.5 rounded-md text-[#3d5269] hover:text-[#8a9bb5] hover:bg-[#1a2535]
-                    transition-colors text-[11px] font-medium
-                  `}
+                  className={`hidden md:flex w-full items-center justify-center gap-2 py-1.5 rounded-lg transition-all duration-150 text-[11px] font-medium`}
+                  style={{ color: 'rgba(255,255,255,0.2)' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.2)'; e.currentTarget.style.background = 'transparent'; }}
                 >
-                  <ChevronRight size={14} className={`transition-transform duration-300 ${collapsed ? '' : 'rotate-180'}`} />
-                  {!collapsed && <span>Collapse sidebar</span>}
+                  <ChevronRight size={13} className={`transition-transform duration-300 ${collapsed ? '' : 'rotate-180'}`} />
+                  {!collapsed && <span>Collapse</span>}
                 </button>
               </div>
             </aside>
 
-            {/* ── MAIN CONTENT ── */}
-            <main className="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f9] relative">
+            {/* ═══════════════════════════════════════
+                MAIN CONTENT
+                ═══════════════════════════════════════ */}
+            <main className="flex-1 flex flex-col h-screen overflow-hidden relative" style={{ background: 'var(--bg-base)' }}>
+
               {/* Hamburger — mobile */}
               <div className="md:hidden absolute top-[14px] left-4 z-[50]">
                 <button
                   onClick={toggleSidebar}
-                  className="p-2 bg-white rounded-lg shadow-sm text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
+                  className="p-2 rounded-xl transition-all"
+                  style={{
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-mid)',
+                    color: 'var(--text-secondary)',
+                    boxShadow: 'var(--shadow-sm)',
+                  }}
                 >
                   <Menu size={18} />
                 </button>
               </div>
 
-              <Header />
+              <BroadcastTicker />
+              <Header theme={theme} onToggleTheme={toggleTheme} />
 
-              <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ background: 'var(--bg-base)' }}>
                 {!loading && !canAccessPage() ? (
                   <div className="flex flex-col items-center justify-center h-full text-center p-10">
-                    <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center mb-5">
-                      <ShieldAlert size={32} className="text-rose-500" />
+                    <div
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                      style={{ background: 'var(--danger-bg)', border: '1px solid rgba(248,113,113,0.2)' }}
+                    >
+                      <ShieldAlert size={32} style={{ color: 'var(--danger)' }} />
                     </div>
-                    <h1 className="text-xl font-bold text-slate-900">Akses Dibatasi</h1>
-                    <p className="text-slate-500 max-w-sm mt-2 text-sm">
-                      Role <span className="font-semibold text-slate-700">{userProfile.role}</span> tidak memiliki izin untuk mengakses halaman ini.
+                    <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Akses Dibatasi</h1>
+                    <p className="max-w-sm mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      Role{' '}
+                      <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{userProfile.role}</span>
+                      {' '}tidak memiliki izin untuk mengakses halaman ini.
                     </p>
                     <Link
                       href="/"
-                      className="mt-6 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm shadow-sm transition-colors"
+                      className="btn btn-primary mt-6"
                     >
                       Kembali ke Dashboard
                     </Link>

@@ -9,6 +9,7 @@ import {
 import { format } from 'date-fns';
 import { id as indonesia } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { logActivity, getActorName } from '@/lib/logger';
 
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -46,6 +47,7 @@ export default function BroadcastPage() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<any>(null);
 
   const [form, setForm] = useState({
     type: 'INFO',
@@ -93,13 +95,32 @@ export default function BroadcastPage() {
       fetchHistory();
       toast.success('Broadcast Terkirim!', { description: 'Pesan akan muncul di dashboard semua user.' });
       setForm({ ...form, title: '', message: '' });
+      const actorName = await getActorName(supabase);
+      await logActivity({
+        activity: 'BROADCAST_SEND',
+        subject: form.title,
+        actor: actorName,
+        detail: `Tipe: ${form.type} · Sender: ${form.sender}`,
+      });
     }
   };
 
-  const handleDelete = async (id: any) => {
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmId) return;
+    const id = deleteConfirmId;
+    setDeleteConfirmId(null);
     const { error } = await supabase.from('Broadcasts').delete().eq('id', id);
     if (error) toast.error('Gagal hapus data');
-    else { toast.success('Log dihapus'); fetchHistory(); }
+    else {
+      toast.success('Log broadcast dihapus.');
+      fetchHistory();
+      const actorName = await getActorName(supabase);
+      await logActivity({
+        activity: 'BROADCAST_DELETE',
+        subject: `Broadcast #${id}`,
+        actor: actorName,
+      });
+    }
   };
 
   const handleCopy = (title: string, msg: string) => {
@@ -121,7 +142,7 @@ export default function BroadcastPage() {
   return (
     <div
       className="p-6 md:p-8 min-h-screen flex flex-col lg:flex-row gap-5"
-      style={{ background: '#f4f6f9', fontFamily: "'IBM Plex Sans', sans-serif" }}
+      style={{ background: 'var(--bg-base)', fontFamily: "'Inter', sans-serif" }}
     >
 
       {/* ── LEFT: EDITOR ── */}
@@ -288,8 +309,9 @@ export default function BroadcastPage() {
                       </span>
                     </div>
                     <button
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => setDeleteConfirmId(item.id)}
                       className="text-slate-300 hover:text-rose-500 p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
+                      title="Hapus broadcast"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -320,6 +342,42 @@ export default function BroadcastPage() {
           )}
         </div>
       </div>
+
+      {/* ── KONFIRMASI HAPUS BROADCAST ── */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="p-2 bg-rose-50 rounded-lg text-rose-600">
+                <Trash2 size={15} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-800">Hapus Broadcast?</h3>
+                <p className="text-[11px] text-slate-400">Aksi ini tidak bisa dibatalkan.</p>
+              </div>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-xs text-slate-600">
+                Log broadcast <span className="font-mono font-bold text-slate-800">#{deleteConfirmId}</span> akan dihapus permanen dari riwayat.
+              </p>
+            </div>
+            <div className="px-5 pb-5 flex gap-2">
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-colors"
+              >
+                Ya, Hapus
+              </button>
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-colors"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

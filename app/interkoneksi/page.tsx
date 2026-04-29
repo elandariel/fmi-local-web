@@ -10,6 +10,7 @@ import {
   Network, Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logActivity, getActorName } from '@/lib/logger';
 
 // ─────────────────────────────────────────────
 // DETAIL DRAWER HELPERS
@@ -18,8 +19,8 @@ function DrawerSection({
   icon, title, color, children
 }: { icon: React.ReactNode; title: string; color: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-slate-100 overflow-hidden">
-      <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
+    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-light)' }}>
+      <div className="px-4 py-2.5 border-b flex items-center gap-2" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-light)' }}>
         <span className={color}>{icon}</span>
         <p className={`text-[10px] font-bold uppercase tracking-widest ${color}`}>{title}</p>
       </div>
@@ -40,21 +41,21 @@ function DrawerField({
 }) {
   const empty = !value;
   return (
-    <div className={`
-      rounded-lg p-3 border
-      ${accent ? 'bg-blue-50 border-blue-100' : 'bg-slate-50 border-slate-100'}
-      ${span ? 'col-span-2' : ''}
-    `}>
+    <div
+      className={`rounded-lg p-3 ${span ? 'col-span-2' : ''}`}
+      style={{
+        background: accent ? 'var(--info-bg)' : 'var(--bg-elevated)',
+        border: `1px solid ${accent ? 'rgba(56,189,248,0.2)' : 'var(--border-light)'}`,
+      }}
+    >
       <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5">
         {label}
       </p>
       <p className={`
         text-sm font-semibold leading-snug
         ${mono ? 'font-mono' : ''}
-        ${accent ? 'text-blue-700' : 'text-slate-700'}
-        ${empty ? 'text-slate-300 italic font-normal' : ''}
         ${wrap ? 'break-words whitespace-normal' : 'truncate'}
-      `}>
+      `} style={{ color: empty ? 'var(--text-muted)' : accent ? 'var(--info)' : 'var(--text-primary)', fontStyle: empty ? 'italic' : 'normal', fontWeight: empty ? '400' : undefined }}>
         {value || '—'}
       </p>
     </div>
@@ -89,7 +90,7 @@ export default function InterkoneksiPage() {
     ID_Pelanggan: '', Nama_ISP: '', Location: '', Lantai: '',
     Device: '', SN_Perangkat: '', Rack: '', OTB: '', Type: '',
     Port: '', No_Reff: '', Label: '', Kapasitas: '', Limitasi: '',
-    Status: 'Active'
+    Status: 'Active', Note: ''
   };
 
   const [formData, setFormData] = useState(emptyForm);
@@ -124,13 +125,32 @@ export default function InterkoneksiPage() {
           });
           return row;
         }).filter(row => Object.keys(row).length > 0);
-        if (confirm(`Upsert ${importedData.length} data ke database?`)) {
-          setLoading(true);
-          const { error } = await supabase.from('Data Interkoneksi').upsert(importedData);
-          if (error) throw error;
-          toast.success('Import Berhasil!');
-          fetchData();
-        }
+        toast.warning(`Upsert ${importedData.length} data ke database?`, {
+            action: {
+              label: 'Ya, Proses',
+              onClick: async () => {
+                setLoading(true);
+                try {
+                  const { error } = await supabase.from('Data Interkoneksi').upsert(importedData);
+                  if (error) throw error;
+                  toast.success('Import Berhasil!');
+                  fetchData();
+                  const actorName = await getActorName(supabase);
+                  await logActivity({
+                    activity: 'INTERKONEKSI_IMPORT',
+                    subject: `${importedData.length} baris data`,
+                    actor: actorName,
+                  });
+                } catch (err: any) {
+                  toast.error('Gagal import: ' + err.message);
+                } finally {
+                  setLoading(false);
+                }
+              }
+            },
+            cancel: { label: 'Batal', onClick: () => {} },
+            duration: 8000,
+          });
       } catch (err: any) {
         toast.error('Gagal: ' + err.message);
       } finally {
@@ -184,14 +204,29 @@ export default function InterkoneksiPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Hapus data ini?')) return;
-    setLoading(true);
-    try {
-      await supabase.from('Data Interkoneksi').delete().eq('id', id);
-      toast.success('Data dihapus');
-      if (detailItem?.id === id) setDetailItem(null);
-      fetchData();
-    } finally { setLoading(false); }
+    const itemToDelete = data.find((d: any) => d.id === id);
+    toast.warning('Hapus data ini permanen?', {
+      action: {
+        label: 'Ya, Hapus',
+        onClick: async () => {
+          setLoading(true);
+          try {
+            await supabase.from('Data Interkoneksi').delete().eq('id', id);
+            toast.success('Data berhasil dihapus');
+            if (detailItem?.id === id) setDetailItem(null);
+            fetchData();
+            const actorName = await getActorName(supabase);
+            await logActivity({
+              activity: 'INTERKONEKSI_DELETE',
+              subject: itemToDelete?.['NAMA'] || itemToDelete?.['name'] || `ID ${id}`,
+              actor: actorName,
+            });
+          } finally { setLoading(false); }
+        }
+      },
+      cancel: { label: 'Batal', onClick: () => {} },
+      duration: 6000,
+    });
   };
 
   const handleSyncSheet = async () => {
@@ -216,7 +251,7 @@ export default function InterkoneksiPage() {
       Type: item?.Type || '',                 Port: item?.Port || '',
       No_Reff: item?.No_Reff || '',           Label: item?.Label || '',
       Kapasitas: item?.Kapasitas || '',       Limitasi: item?.Limitasi || '',
-      Status: item?.Status || 'Active'
+      Status: item?.Status || 'Active',       Note: item?.Note || ''
     });
     setIsModalOpen(true);
   };
@@ -244,7 +279,7 @@ export default function InterkoneksiPage() {
   return (
     <div
       className="min-h-screen p-6 md:p-8"
-      style={{ background: '#f4f6f9', fontFamily: "'IBM Plex Sans', sans-serif" }}
+      style={{ background: 'var(--bg-base)', fontFamily: "'Inter', sans-serif" }}
     >
       <div className="max-w-[1600px] mx-auto">
 
@@ -275,7 +310,7 @@ export default function InterkoneksiPage() {
         </div>
 
         {/* ── SEARCH ── */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm mb-5 flex items-center overflow-hidden">
+        <div className="rounded-xl border shadow-sm mb-5 flex items-center overflow-hidden" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-light)' }}>
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
             <input
@@ -291,11 +326,11 @@ export default function InterkoneksiPage() {
         </div>
 
         {/* ── TABLE ── */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="rounded-xl border shadow-sm overflow-hidden" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-light)' }}>
           <div className="overflow-x-auto">
             <table className="w-full text-left whitespace-nowrap">
               <thead>
-                <tr className="border-b border-slate-100" style={{ background: '#f8fafc' }}>
+                <tr className="border-b" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-light)' }}>
                   <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">ID & Status</th>
                   <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">ISP / Pelanggan</th>
                   <th className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Site & Lokasi</th>
@@ -340,6 +375,11 @@ export default function InterkoneksiPage() {
                             }`}
                           >
                             {item.ID_Pelanggan || '—'}
+                            {item.Note && (
+                              <span title="Ada catatan" className="inline-flex shrink-0">
+                                <Info size={10} className="text-amber-500" />
+                              </span>
+                            )}
                             <ChevronRight
                               size={12}
                               className={`transition-all duration-200 ${
@@ -438,11 +478,11 @@ export default function InterkoneksiPage() {
 
       {/* Drawer panel */}
       <div
-        className={`fixed top-0 right-0 bottom-0 z-50 w-[480px] bg-white shadow-2xl flex flex-col
+        className={`fixed top-0 right-0 bottom-0 z-50 w-[480px] shadow-2xl flex flex-col
           transition-transform duration-300 ease-in-out
           ${detailItem ? 'translate-x-0' : 'translate-x-full'}
         `}
-        style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}
+        style={{ fontFamily: "'Inter', sans-serif", background: 'var(--bg-surface)', borderLeft: '1px solid var(--border-mid)' }}
       >
         {detailItem && (
           <>
@@ -457,7 +497,7 @@ export default function InterkoneksiPage() {
             />
 
             {/* Drawer header */}
-            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50 shrink-0">
+            <div className="px-6 py-5 border-b shrink-0" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-light)' }}>
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -505,7 +545,7 @@ export default function InterkoneksiPage() {
             </div>
 
             {/* Drawer body — scrollable, all text wraps */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-white">
+            <div className="flex-1 overflow-y-auto p-5 space-y-4" style={{ background: 'var(--bg-surface)' }}>
 
               {/* Lokasi */}
               <DrawerSection icon={<MapPin size={13} />} title="Lokasi" color="text-blue-600">
@@ -557,6 +597,38 @@ export default function InterkoneksiPage() {
                 <DrawerField label="Label"         value={detailItem.Label}        wrap span />
               </DrawerSection>
 
+              {/* Note — always shown, highlight if has content */}
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{ border: `1px solid ${detailItem.Note ? 'rgba(251,191,36,0.4)' : 'var(--border-light)'}` }}
+              >
+                <div
+                  className="px-4 py-2.5 border-b flex items-center gap-2"
+                  style={{
+                    background: detailItem.Note ? 'rgba(251,191,36,0.08)' : 'var(--bg-elevated)',
+                    borderColor: detailItem.Note ? 'rgba(251,191,36,0.3)' : 'var(--border-light)'
+                  }}
+                >
+                  <span className={detailItem.Note ? 'text-amber-500' : 'text-slate-400'}>
+                    <Info size={13} />
+                  </span>
+                  <p className={`text-[10px] font-bold uppercase tracking-widest ${detailItem.Note ? 'text-amber-600' : 'text-slate-400'}`}>
+                    Catatan / Note
+                  </p>
+                </div>
+                <div className="p-4" style={{ background: 'var(--bg-surface)' }}>
+                  {detailItem.Note ? (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words" style={{ color: 'var(--text-primary)' }}>
+                      {detailItem.Note}
+                    </p>
+                  ) : (
+                    <p className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
+                      Tidak ada catatan untuk data ini.
+                    </p>
+                  )}
+                </div>
+              </div>
+
             </div>
           </>
         )}
@@ -567,9 +639,10 @@ export default function InterkoneksiPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <form
             onSubmit={handleSubmit}
-            className="bg-white w-full max-w-4xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
+            className="w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden"
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-mid)' }}
           >
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+            <div className="px-6 py-4 border-b flex justify-between items-center" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-light)' }}>
               <div>
                 <h2 className="font-bold text-slate-800 text-base">
                   {editingItem ? 'Update' : 'Tambah'} <span className="text-blue-600">Interkoneksi</span>
@@ -581,7 +654,7 @@ export default function InterkoneksiPage() {
               </button>
             </div>
 
-            <div className="p-6 max-h-[65vh] overflow-y-auto">
+            <div className="p-6 max-h-[65vh] overflow-y-auto space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-bold text-blue-600 uppercase tracking-widest">Status</label>
@@ -610,9 +683,25 @@ export default function InterkoneksiPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Note — full width textarea */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold text-amber-600 uppercase tracking-widest flex items-center gap-1.5">
+                  <Info size={11} /> Catatan / Note
+                </label>
+                <textarea
+                  value={formData.Note}
+                  onChange={(e) => setFormData({ ...formData, Note: e.target.value })}
+                  placeholder="Tambahkan catatan tambahan tentang interkoneksi ini..."
+                  rows={3}
+                  className="input resize-none leading-relaxed"
+                  style={{ minHeight: '72px' }}
+                />
+                <p className="text-[10px] text-slate-400">Note hanya bisa dilihat dengan klik ID Pelanggan.</p>
+              </div>
             </div>
 
-            <div className="px-6 py-4 bg-slate-50 border-t flex justify-end gap-2.5">
+            <div className="px-6 py-4 border-t flex justify-end gap-2.5" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-light)' }}>
               <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-all">
                 Batal
               </button>

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { hasAccess, PERMISSIONS, Role } from '@/lib/permissions';
 import { toast } from 'sonner';
+import { logActivity, getActorName } from '@/lib/logger';
 
 const VLAN_TABLES = [
   { name: 'VLAN 1-1000', table: 'Daftar Vlan 1-1000' },
@@ -16,6 +17,7 @@ const VLAN_TABLES = [
   { name: 'VLAN 2000+', table: 'Daftar Vlan 2000+' },
   { name: 'VLAN 3000+', table: 'Daftar Vlan 3000+' },
   { name: 'VLAN 3500+', table: 'Daftar Vlan 3500+' },
+  { name: 'VLAN 4003+', table: 'Daftar Vlan 4003+' },
 ];
 
 export default function VlanPage() {
@@ -167,7 +169,14 @@ export default function VlanPage() {
     } else {
       toast.success('Data VLAN Berhasil Diupdate!');
       setIsModalOpen(false);
-      fetchData(); 
+      fetchData();
+      const actorName = await getActorName(supabase);
+      await logActivity({
+        activity: 'VLAN_EDIT',
+        subject: `VLAN ${editingVlan.VLAN} — ${editingVlan.NAME || 'AVAILABLE'}`,
+        actor: actorName,
+        detail: `Tabel: ${selectedTable.name}`,
+      });
     }
     setIsSaving(false);
   };
@@ -198,6 +207,13 @@ export default function VlanPage() {
       toast.success(`VLAN ${editingVlan.VLAN} Berhasil Dikosongkan!`);
       setIsModalOpen(false);
       fetchData();
+      const actorName = await getActorName(supabase);
+      await logActivity({
+        activity: 'VLAN_RESET',
+        subject: `VLAN ${editingVlan.VLAN}`,
+        actor: actorName,
+        detail: `Dikosongkan di ${selectedTable.name}`,
+      });
     }
     setIsSaving(false);
   };
@@ -205,7 +221,7 @@ export default function VlanPage() {
   const canEditDelete = hasAccess(userRole, PERMISSIONS.VLAN_EDIT_DELETE);
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen font-sans relative">
+    <div className="p-6 min-h-screen font-sans relative" style={{ background: 'var(--bg-base)' }}>
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
@@ -228,8 +244,9 @@ export default function VlanPage() {
            </button>
 
            <div className="relative">
-             <select 
-              className="appearance-none bg-white border border-slate-300 text-slate-700 py-2 pl-4 pr-8 rounded-lg leading-tight focus:outline-none focus:border-blue-500 font-medium text-sm"
+             <select
+              className="appearance-none border border-slate-300 py-2 pl-4 pr-8 rounded-lg leading-tight focus:outline-none focus:border-blue-500 font-medium text-sm"
+              style={{ background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
               value={selectedTable.name}
               onChange={(e) => setSelectedTable(VLAN_TABLES.find(t => t.name === e.target.value) || VLAN_TABLES[0])}
              >
@@ -250,23 +267,23 @@ export default function VlanPage() {
 
       {/* STATISTIK */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 flex justify-between items-center">
-          <div><p className="text-xs font-bold text-slate-800 uppercase">Total VLAN</p><h3 className="text-2xl font-bold text-slate-800">{stats.total}</h3></div>
-          <Database className="text-blue-100" size={32} />
+        <div className="p-4 rounded-xl shadow-sm border-l-4 border-blue-500 flex justify-between items-center" style={{ background: 'var(--bg-surface)' }}>
+          <div><p className="text-xs font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Total VLAN</p><h3 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{stats.total}</h3></div>
+          <Database className="text-blue-500 opacity-20" size={32} />
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-rose-500 flex justify-between items-center">
-          <div><p className="text-xs font-bold text-slate-800 uppercase">Terpakai (Used)</p><h3 className="text-2xl font-bold text-rose-600">{stats.used}</h3></div>
-          <AlertCircle className="text-rose-100" size={32} />
+        <div className="p-4 rounded-xl shadow-sm border-l-4 border-rose-500 flex justify-between items-center" style={{ background: 'var(--bg-surface)' }}>
+          <div><p className="text-xs font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Terpakai (Used)</p><h3 className="text-2xl font-bold text-rose-500">{stats.used}</h3></div>
+          <AlertCircle className="text-rose-500 opacity-20" size={32} />
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-500 flex justify-between items-center">
-          <div><p className="text-xs font-bold text-slate-800 uppercase">Tersedia (Free)</p><h3 className="text-2xl font-bold text-emerald-600">{stats.free}</h3></div>
-          <CheckCircle className="text-emerald-100" size={32} />
+        <div className="p-4 rounded-xl shadow-sm border-l-4 border-emerald-500 flex justify-between items-center" style={{ background: 'var(--bg-surface)' }}>
+          <div><p className="text-xs font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Tersedia (Free)</p><h3 className="text-2xl font-bold text-emerald-500">{stats.free}</h3></div>
+          <CheckCircle className="text-emerald-500 opacity-20" size={32} />
         </div>
       </div>
 
       {/* TABLE SECTION */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+      <div className="rounded-xl shadow-sm border overflow-hidden flex flex-col" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-light)' }}>
+        <div className="p-4 border-b flex items-center justify-between" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-light)' }}>
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-2.5 text-slate-400" size={18} />
             <input 
@@ -301,9 +318,9 @@ export default function VlanPage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-slate-100 text-slate-600 font-bold uppercase text-xs">
+            <thead style={{ background: 'var(--bg-elevated)' }} className="font-bold uppercase text-xs">
               <tr>
-                <th className="px-6 py-3 border-b text-center w-24 sticky left-0 bg-slate-100 z-10 shadow-sm">Status</th>
+                <th className="px-6 py-3 border-b text-center w-24 sticky left-0 z-10 shadow-sm" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', borderColor: 'var(--border-light)' }}>Status</th>
                 <th className="px-6 py-3 border-b w-20">VLAN ID</th>
                 <th className="px-6 py-3 border-b min-w-[200px]">Customer Name</th>
                 <th className="px-6 py-3 border-b">Service ID</th>
@@ -313,7 +330,7 @@ export default function VlanPage() {
                 <th className="px-6 py-3 border-b bg-purple-50/50 text-purple-700 min-w-[150px]">Far End</th>
                 <th className="px-6 py-3 border-b bg-purple-50/50 text-purple-700">FE Port</th>
                 <th className="px-6 py-3 border-b bg-purple-50/50 text-purple-700">FE Mode</th>
-                <th className="px-6 py-3 border-b text-center sticky right-0 bg-slate-100 z-10 shadow-sm">Action</th>
+                <th className="px-6 py-3 border-b text-center sticky right-0 z-10 shadow-sm" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', borderColor: 'var(--border-light)' }}>Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -326,7 +343,7 @@ export default function VlanPage() {
                   
                   return (
                     <tr key={v.VLAN || index} className={`hover:bg-slate-50 transition-colors ${!isUsed ? 'bg-emerald-50/20' : ''}`}>
-                      <td className="px-6 py-3 text-center sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                      <td className="px-6 py-3 text-center sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" style={{ background: 'var(--bg-surface)' }}>
                         {isUsed ? 
                           <span className="px-2 py-1 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200 uppercase">USED</span> : 
                           <span className="px-2 py-1 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 uppercase">FREE</span>
@@ -343,7 +360,7 @@ export default function VlanPage() {
                       <td className="px-6 py-3 text-slate-600 text-xs font-mono bg-purple-50/20">{v['FE_SWITCH POP']}</td>
                       <td className="px-6 py-3 text-slate-600 text-xs font-mono bg-purple-50/20">{v['FE_PORT']}</td>
                       <td className="px-6 py-3 text-slate-600 text-xs font-mono bg-purple-50/20">{v['FE_MODE']}</td>
-                      <td className="px-6 py-3 text-center sticky right-0 bg-white z-10 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                      <td className="px-6 py-3 text-center sticky right-0 z-10 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]" style={{ background: 'var(--bg-surface)' }}>
                         {canEditDelete ? (
                           <button onClick={() => handleEditClick(v)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Edit Detail">
                             <Edit size={16} />
@@ -364,20 +381,22 @@ export default function VlanPage() {
           </table>
         </div>
         
-        <div className="p-3 border-t border-slate-100 bg-slate-50 flex justify-center">
-            <div className="flex items-center gap-4 text-sm font-bold text-slate-600">
-                <button 
+        <div className="p-3 border-t flex justify-center" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-light)' }}>
+            <div className="flex items-center gap-4 text-sm font-bold" style={{ color: 'var(--text-secondary)' }}>
+                <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-light)', color: 'var(--text-secondary)' }}
                 >
                   Previous
                 </button>
                 <span>Page {currentPage} of {totalPages || 1}</span>
-                <button 
+                <button
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages || totalPages === 0}
-                  className="px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-light)', color: 'var(--text-secondary)' }}
                 >
                   Next
                 </button>
@@ -389,9 +408,9 @@ export default function VlanPage() {
       {/* --- MODAL EDIT VLAN (Z-Index 50) --- */}
       {isModalOpen && editingVlan && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
-            
-            <div className="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
+          <div className="rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-mid)' }}>
+
+            <div className="p-4 flex justify-between items-center shrink-0" style={{ background: 'var(--accent-deep)', color: '#fff' }}>
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Edit size={18} /> Edit VLAN {editingVlan.VLAN}
               </h2>
@@ -402,7 +421,7 @@ export default function VlanPage() {
 
             <div className="p-6 overflow-y-auto space-y-6">
               
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+              <div className="p-4 rounded-lg border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-light)' }}>
                 <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">Informasi Layanan</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -468,7 +487,7 @@ export default function VlanPage() {
 
             </div>
 
-            <div className="p-4 border-t bg-slate-50 flex justify-between items-center shrink-0">
+            <div className="p-4 border-t flex justify-between items-center shrink-0" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-light)' }}>
               <button onClick={handleResetClick} disabled={isSaving}
                 className="text-rose-600 text-sm font-bold hover:bg-rose-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-1">
                 <Trash2 size={16} /> Reset / Kosongkan
@@ -489,9 +508,9 @@ export default function VlanPage() {
       {/* --- MODAL KONFIRMASI RESET (Dipindah ke Bawah + Z-Index 100) --- */}
       {showResetConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-[400px] overflow-hidden border border-slate-200 scale-100 animate-in zoom-in-95 duration-200">
-            <div className="p-6 text-center border-b border-slate-100">
-              <div className="w-14 h-14 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="rounded-2xl shadow-2xl w-[400px] overflow-hidden scale-100 animate-in zoom-in-95 duration-200" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-mid)' }}>
+            <div className="p-6 text-center border-b" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--danger-bg)', color: 'var(--danger)' }}>
                 <AlertTriangle size={28} />
               </div>
               <h2 className="text-lg font-bold text-slate-800">Lepas VLAN {editingVlan?.VLAN}?</h2>
@@ -499,10 +518,11 @@ export default function VlanPage() {
                 Data customer akan dihapus dan status VLAN akan kembali menjadi <strong className="text-emerald-600">AVAILABLE</strong>.
               </p>
             </div>
-            <div className="p-4 bg-slate-50 flex gap-3">
-              <button 
+            <div className="p-4 flex gap-3" style={{ background: 'var(--bg-elevated)', borderTop: '1px solid var(--border-light)' }}>
+              <button
                 onClick={() => setShowResetConfirm(false)}
-                className="flex-1 py-2.5 px-4 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold hover:bg-slate-100 transition"
+                className="flex-1 py-2.5 px-4 rounded-xl font-bold transition"
+                style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid var(--border-mid)' }}
               >
                 Batal
               </button>

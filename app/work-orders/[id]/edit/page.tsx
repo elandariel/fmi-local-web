@@ -25,7 +25,6 @@ export default async function EditWorkOrder({ params }: { params: Promise<{ id: 
       { cookies: { get(name: string) { return cookieStore.get(name)?.value } } }
     );
 
-    // DISINI PERBAIKANNYA: Nama key harus sesuai kolom DB (Huruf Kapital)
     const updatedData = {
       'SUBJECT WO': formData.get('subject'),
       'STATUS': formData.get('status'),
@@ -34,7 +33,27 @@ export default async function EditWorkOrder({ params }: { params: Promise<{ id: 
     };
 
     const { error } = await supabase.from('Report Bulanan').update(updatedData).eq('id', id);
-    if (!error) redirect(`/work-orders/${id}`);
+
+    if (!error) {
+      // Log aktivitas dari server action
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        let actorName = 'Admin';
+        if (user) {
+          const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+          actorName = profile?.full_name || user.email?.split('@')[0] || 'Admin';
+        }
+        await supabase.from('Log_Aktivitas').insert({
+          ACTIVITY: 'WO_EDIT',
+          ACTIVITY_LABEL: 'Edit Work Order',
+          MODULE: 'Monthly Report',
+          SUBJECT: `WO #${id} — ${formData.get('subject') || ''}`,
+          DETAIL: `Status: ${formData.get('status')} · Team: ${formData.get('team') || '-'}`,
+          actor: actorName,
+        });
+      } catch { /* logging gagal tidak crash app */ }
+      redirect(`/work-orders/${id}`);
+    }
   }
 
   return (

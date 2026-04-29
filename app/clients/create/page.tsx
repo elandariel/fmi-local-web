@@ -92,16 +92,29 @@ ${data['Konfigurasi'] || '-'}
       return;
     }
 
+    // Fetch user dulu sebelum insert — diperlukan untuk kolom Officer
+    const { data: { user } } = await supabase.auth.getUser();
+    let actorName = 'System';
+    if (user) {
+      const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+      actorName = profile?.full_name || user.email || 'User';
+    }
+
     const dbPayload = {
-      'ID Pelanggan': formData['ID Pelanggan'],
-      'Nama Pelanggan': formData['Nama Pelanggan'],
-      'ALAMAT': formData['ALAMAT'],
-      'VMAN / VLAN': formData['VMAN / VLAN'],
-      'Near End': formData['Near End'],
-      'Far End': formData['Far End'],
-      'STATUS': formData['STATUS'],
-      'Kapasitas': formData['Kapasitas'],
-      'RX ONT/SFP': formData['RX ONT/SFP'],
+      'Officer':          actorName,
+      'ID Pelanggan':     formData['ID Pelanggan'],
+      'Nama Pelanggan':   formData['Nama Pelanggan'],
+      'ALAMAT':           formData['ALAMAT'],
+      'VMAN / VLAN':      formData['VMAN / VLAN'],
+      'Near End':         formData['Near End'],
+      'Far End':          formData['Far End'],
+      'STATUS':           formData['STATUS'],
+      'Kapasitas':        formData['Kapasitas'],
+      'RX ONT/SFP':       formData['RX ONT/SFP'],
+      'SN ONT/SFP':       formData['SN ONT'],
+      'Data Pelanggan':   'Sudah Ditambahkan',
+      'Daftar Vlan':      'Sudah Ditambahkan',
+      'MRTG':             'Sudah Ditambahkan',
     };
 
     const { error } = await supabase.from('Data Client Corporate').insert([dbPayload]);
@@ -110,12 +123,6 @@ ${data['Konfigurasi'] || '-'}
       toast.error('Gagal menyimpan: ' + error.message);
       setSaving(false);
     } else {
-      const { data: { user } } = await supabase.auth.getUser();
-      let actorName = 'System';
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
-        actorName = profile?.full_name || user.email || 'User';
-      }
       await logActivity({ activity: 'Input Client Corp', subject: formData['Nama Pelanggan'], actor: actorName });
       downloadTxt(formData);
       toast.success('Client Berhasil Disimpan!', {
@@ -128,7 +135,7 @@ ${data['Konfigurasi'] || '-'}
   };
 
   return (
-    <div className="w-full max-w-3xl" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+    <div className="w-full max-w-3xl" style={{ fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── HEADER ── */}
       <div className="flex items-center gap-3 mb-6">
@@ -329,7 +336,7 @@ function FormField({ label, required, children }: { label: string; required?: bo
 // ─────────────────────────────────────────────
 export default function CreateClientPage() {
   return (
-    <div className="min-h-screen p-6 md:p-8 flex justify-center items-start" style={{ background: '#f4f6f9', fontFamily: "'IBM Plex Sans', sans-serif" }}>
+    <div className="min-h-screen p-6 md:p-8 flex justify-center items-start" style={{ background: 'var(--bg-base)', fontFamily: "'Inter', sans-serif" }}>
       <Suspense fallback={
         <div className="flex h-64 items-center justify-center">
           <Loader2 className="animate-spin text-blue-600" size={24} />

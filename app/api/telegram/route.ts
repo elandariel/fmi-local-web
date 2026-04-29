@@ -1,3 +1,6 @@
+// app/api/telegram/route.ts
+// Bot 1 — Log Notifikasi: kirim pesan ke topic/thread grup
+
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -5,38 +8,35 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { message, topicId } = body;
 
-    // Ambil Token & Chat ID dari Environment Server
-    const token = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID;
+    const token  = process.env.TELEGRAM_LOG_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_LOG_GROUP_ID;
+    const defaultTopic = process.env.TELEGRAM_LOG_TOPIC_ID;
 
     if (!token || !chatId) {
-      return NextResponse.json({ error: 'Config Telegram Belum Lengkap (Cek .env.local)' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Config Bot 1 belum lengkap (TELEGRAM_LOG_BOT_TOKEN / TELEGRAM_LOG_GROUP_ID)' },
+        { status: 500 }
+      );
     }
 
-    // Kirim ke Telegram dari Server (Bebas CORS)
-    const url = `https://api.telegram.org/bot${token}/sendMessage`;
-    
-    const telegramRes = await fetch(url, {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        message_thread_id: topicId || null,
+        message_thread_id: topicId ?? defaultTopic ?? undefined,
         text: message,
-        parse_mode: 'HTML'
-      })
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      }),
     });
 
-    const telegramData = await telegramRes.json();
-    
-    if (!telegramData.ok) {
-      throw new Error(telegramData.description);
-    }
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.description);
 
-    return NextResponse.json({ success: true, data: telegramData });
-
+    return NextResponse.json({ success: true, data });
   } catch (error: any) {
-    console.error("Telegram API Error:", error.message);
+    console.error('[Bot1/Log] Error:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

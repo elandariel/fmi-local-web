@@ -35,7 +35,8 @@ function EditClientContent() {
     'Far End': '',
     'STATUS': '',
     'Kapasitas': '',
-    'RX ONT/SFP': ''
+    'RX ONT/SFP': '',
+    'SN ONT/SFP': '',
   });
 
   useEffect(() => {
@@ -67,13 +68,14 @@ function EditClientContent() {
       .from('Data Client Corporate')
       .update({
         'Nama Pelanggan': formData['Nama Pelanggan'],
-        'ALAMAT': formData['ALAMAT'],
-        'VMAN / VLAN': formData['VMAN / VLAN'],
-        'Near End': formData['Near End'],
-        'Far End': formData['Far End'],
-        'STATUS': formData['STATUS'],
-        'Kapasitas': formData['Kapasitas'],
-        'RX ONT/SFP': formData['RX ONT/SFP']
+        'ALAMAT':         formData['ALAMAT'],
+        'VMAN / VLAN':    formData['VMAN / VLAN'],
+        'Near End':       formData['Near End'],
+        'Far End':        formData['Far End'],
+        'STATUS':         formData['STATUS'],
+        'Kapasitas':      formData['Kapasitas'],
+        'RX ONT/SFP':     formData['RX ONT/SFP'],
+        'SN ONT/SFP':     formData['SN ONT/SFP'],
       })
       .eq('id', id);
 
@@ -116,7 +118,7 @@ function EditClientContent() {
   );
 
   return (
-    <div className="w-full max-w-3xl" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+    <div className="w-full max-w-3xl" style={{ fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── DELETE MODAL ── */}
       {showDeleteModal && (
@@ -216,7 +218,7 @@ function EditClientContent() {
 
         {/* ── GROUP 2: TEKNIS ── */}
         <FormSection title="Spesifikasi Teknis">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <FormField label="VLAN / VMAN">
               <input
                 name="VMAN / VLAN"
@@ -238,6 +240,15 @@ function EditClientContent() {
                 name="RX ONT/SFP"
                 value={formData['RX ONT/SFP'] || ''}
                 onChange={handleChange}
+                className="input font-mono"
+              />
+            </FormField>
+            <FormField label="SN ONT/SFP">
+              <input
+                name="SN ONT/SFP"
+                value={formData['SN ONT/SFP'] || ''}
+                onChange={handleChange}
+                placeholder="ZTEGC8..."
                 className="input font-mono"
               />
             </FormField>
@@ -316,7 +327,7 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
 // ─────────────────────────────────────────────
 export default function EditClientPage() {
   return (
-    <div className="min-h-screen p-6 md:p-8 flex justify-center items-start" style={{ background: '#f4f6f9', fontFamily: "'IBM Plex Sans', sans-serif" }}>
+    <div className="min-h-screen p-6 md:p-8 flex justify-center items-start" style={{ background: 'var(--bg-base)', fontFamily: "'Inter', sans-serif" }}>
       <Suspense fallback={
         <div className="flex h-64 items-center justify-center">
           <Loader2 className="animate-spin text-blue-600" size={24} />
