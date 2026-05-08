@@ -2701,6 +2701,8 @@ export default function ReportBackbone() {
   const [pageTab, setPageTab] = useState<"overview" | "tiket" | "pop-kaki">("tiket");
   // ── Overview left panel search ──
   const [popAlertSearch, setPopAlertSearch] = useState("");
+  // ── Overview right panel search ──
+  const [slaTicketSearch, setSlaTicketSearch] = useState("");
 
   // ── Management Backbone PoP modal ──
   const [showBBMgmtModal,  setShowBBMgmtModal]  = useState(false);
@@ -4409,6 +4411,14 @@ export default function ReportBackbone() {
             .filter(t => t.elapsedMin >= SLA_THRESHOLD_HOURS * 60)
             .sort((a, b) => b.elapsedMin - a.elapsedMin);
 
+          const overdueFiltered = slaTicketSearch.trim()
+            ? overdueTickets.filter(({ ticketNo, first }) =>
+                ticketNo.toLowerCase().includes(slaTicketSearch.toLowerCase()) ||
+                (first["Subject Ticket / Email"] || "").toLowerCase().includes(slaTicketSearch.toLowerCase()) ||
+                (first["Jenis Problem"] || "").toLowerCase().includes(slaTicketSearch.toLowerCase())
+              )
+            : overdueTickets;
+
           const fmtElapsed = (min: number) => {
             const h = Math.floor(min / 60);
             const m = min % 60;
@@ -4552,17 +4562,45 @@ export default function ReportBackbone() {
                     </span>
                   )}
                 </div>
-                {/* body */}
-                <div className="flex-1 overflow-y-auto">
+                {/* search */}
+                {overdueTickets.length > 0 && (
+                  <div className="px-3 py-2 flex-shrink-0"
+                       style={{ borderBottom: `1px solid ${C.border}`, background: C.surface }}>
+                    <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
+                         style={{ background: C.elevated, border: `1px solid ${C.border}` }}>
+                      <span className="text-[11px]" style={{ color: C.textMuted }}>🔍</span>
+                      <input
+                        type="text"
+                        placeholder="Cari nomor tiket atau subject..."
+                        value={slaTicketSearch}
+                        onChange={e => setSlaTicketSearch(e.target.value)}
+                        className="flex-1 bg-transparent outline-none text-[11px]"
+                        style={{ color: C.text }}
+                      />
+                      {slaTicketSearch && (
+                        <button onClick={() => setSlaTicketSearch("")}
+                          className="text-[10px] leading-none"
+                          style={{ color: C.textMuted }}>✕</button>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {/* body — max 5 item, scroll */}
+                <div style={{ maxHeight: "calc(5 * 72px)", overflowY: "auto" }}>
                   {overdueTickets.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full py-10 gap-2">
+                    <div className="flex flex-col items-center justify-center py-10 gap-2">
                       <span className="text-2xl">✅</span>
                       <p className="text-[12px] font-bold" style={{ color: "#10b981" }}>Semua tiket dalam SLA</p>
                       <p className="text-[11px]" style={{ color: C.textMuted }}>Tidak ada tiket aktif melewati {SLA_THRESHOLD_HOURS} jam</p>
                     </div>
+                  ) : overdueFiltered.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 gap-2">
+                      <span className="text-xl">🔍</span>
+                      <p className="text-[11px]" style={{ color: C.textMuted }}>Tidak ditemukan untuk &ldquo;{slaTicketSearch}&rdquo;</p>
+                    </div>
                   ) : (
                     <div>
-                      {overdueTickets.map(({ ticketNo, first, elapsedMin }) => {
+                      {overdueFiltered.map(({ ticketNo, first, elapsedMin }) => {
                         const isNOK = first["SLA"] === "NOK";
                         const h     = Math.floor(elapsedMin / 60);
                         const urgentColor = h >= 24 ? "#ef4444"
@@ -4571,7 +4609,7 @@ export default function ReportBackbone() {
                         return (
                           <div key={ticketNo}
                             className="flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors hover:opacity-80"
-                          style={{ borderBottom: `1px solid ${C.border}` }}
+                            style={{ borderBottom: `1px solid ${C.border}` }}
                             onClick={() => {
                               const g = allGroups.find(([t]) => t === ticketNo)?.[1];
                               if (g) { setSelectedTicketGroup(g); setShowDetailModal(true); }
@@ -4611,7 +4649,9 @@ export default function ReportBackbone() {
                 <div className="px-4 py-2 flex-shrink-0 flex items-center justify-between"
                      style={{ borderTop: `1px solid ${C.border}`, background: C.elevated }}>
                   <span className="text-[10px]" style={{ color: C.textMuted }}>
-                    {totalOpen} tiket aktif total
+                    {slaTicketSearch
+                      ? `${overdueFiltered.length} / ${overdueTickets.length} tiket`
+                      : `${totalOpen} tiket aktif total`}
                   </span>
                   <button onClick={() => setPageTab("tiket")}
                     className="text-[10px] font-bold underline"
