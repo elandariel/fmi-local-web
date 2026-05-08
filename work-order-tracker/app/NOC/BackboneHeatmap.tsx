@@ -59,12 +59,20 @@ function cleanAddress(raw: string): string {
   return stripPlusCode(raw).replace(/\s{2,}/g, " ").trim();
 }
 
-// sessionStorage cache ─ persist selama browser session
+// Cache key — sama untuk sessionStorage & localStorage agar bisa dibaca Interactive Summary HTML
 const CACHE_KEY = "noc_geocode_v1";
 
 function loadCache(): Record<string, [number, number] | null> {
   try {
-    return JSON.parse(sessionStorage.getItem(CACHE_KEY) || "{}");
+    const sess = sessionStorage.getItem(CACHE_KEY);
+    if (sess) return JSON.parse(sess);
+    // Seed dari localStorage (diisi sesi sebelumnya / tab lain)
+    const local = localStorage.getItem(CACHE_KEY);
+    if (local) {
+      sessionStorage.setItem(CACHE_KEY, local); // copy ke session agar akses berikutnya cepat
+      return JSON.parse(local);
+    }
+    return {};
   } catch {
     return {};
   }
@@ -74,7 +82,9 @@ function saveToCache(key: string, val: [number, number] | null) {
   try {
     const c = loadCache();
     c[key] = val;
-    sessionStorage.setItem(CACHE_KEY, JSON.stringify(c));
+    const json = JSON.stringify(c);
+    sessionStorage.setItem(CACHE_KEY, json);
+    localStorage.setItem(CACHE_KEY, json); // juga simpan ke localStorage → bisa dibaca tab lain
   } catch {}
 }
 
@@ -258,6 +268,12 @@ export default function BackboneHeatmap({ reports, darkMode = true }: Props) {
     }
     setProgress(p => ({ ...p, running: false }));
   }, [filteredAddrMap, cache]);
+
+  // ── Expose cache to window so ReportBackbone can read it instantly ──
+  // window.__nocGeocodeCache selalu up-to-date dengan in-memory cache BackboneHeatmap
+  useEffect(() => {
+    (window as any).__nocGeocodeCache = cache;
+  }, [cache]);
 
   // ── Build GeoPoints from cache ─────────────────────────────
   const geoPoints: GeoPoint[] = useMemo(() => {
