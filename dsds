@@ -1,0 +1,103 @@
+[33m963e699[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: commit: TEST SIMPAM GITHUB
+[33m9a4cbed[m HEAD@{1}: commit: TEST SIMPAM GITHUB
+[33m50ee83b[m[33m ([m[1;32mclaude/nifty-shaw-dee153[m[33m)[m HEAD@{2}: commit: feat(backbone): WA report, timeline input, detail fixes
+[33m838f738[m HEAD@{3}: commit: feat(backbone): date format, kanban filter, koordinat card, URL links
+[33md25a9fe[m HEAD@{4}: commit: feat(backbone): searchable combobox for kode & nama backbone with auto-fill
+[33m2042b76[m HEAD@{5}: commit: fix(backbone): normalize status strings from DB
+[33md7c336d[m HEAD@{6}: commit: feat(backbone): PDF summary, reason popup, kanban fix, sync upsert
+[33m143ed9f[m HEAD@{7}: commit: feat: update color palette to Modern Dark Slate
+[33m9e56e89[m HEAD@{8}: commit: feat: kanban drag & drop + upsert sync to Google Sheets
+[33m829eeaa[m HEAD@{9}: commit: feat: kanban view, search/filter, sync to Google Sheets
+[33mcd51eaa[m HEAD@{10}: commit: feat: redesign ReportBackbone to match site design system + SLA countdown
+[33m001e030[m HEAD@{11}: commit: feat: add Backbone Report to sidebar nav below Weekly Report
+[33md81e832[m HEAD@{12}: commit: fix: correct column name Alamat Probelm → Alamat Problem
+[33m184eb33[m HEAD@{13}: commit: feat: per-backbone Near End & Far End input on SOLVED update
+[33me8862a0[m HEAD@{14}: commit: refactor: full ReportBackbone overhaul per spec
+[33md8b7e2f[m HEAD@{15}: commit: fix: store MTTR as bigint minutes, display with formatMTTR()
+[33m1076fa5[m HEAD@{16}: commit: fix: ganti 'Hari & Tanggal Closed' → 'Hari dan Tanggal Closed' sesuai kolom Supabase
+[33mfc0ec8b[m HEAD@{17}: commit: feat: ReportBackbone — Update Ticket modal dengan multi-action & form solved lengkap
+[33m77e9022[m HEAD@{18}: commit: feat: ReportBackbone — 3 optimasi utama
+[33m00f3137[m HEAD@{19}: commit: fix: ReportBackbone — perbaiki semua bug kritis + optimasi arsitektur
+[33m5cfa913[m HEAD@{20}: commit: OPTIMASI UIX + BACKUP FILES
+[33m3b5e6ea[m HEAD@{21}: commit: Remove app.zip dan components.zip
+[33m98bbbd8[m HEAD@{22}: commit: OPTIMASI LANJUTAN
+[33mbc0ba8f[m HEAD@{23}: commit: MAINTENANCE SELESAI END OF SERVICE
+[33m0bf11e7[m HEAD@{24}: commit: MAINTENANCE2
+[33m9fcb4cc[m HEAD@{25}: commit: MAINTENANCE
+[33m8acd721[m HEAD@{26}: commit: Update Limitasi SYNC PAGGING MANUAL
+[33mf052cc7[m HEAD@{27}: commit: Update Limitasi SYNC 2.0
+[33m6aef273[m HEAD@{28}: commit: Update Limitasi SYNC TYPO
+[33m852b0db[m HEAD@{29}: commit: Update Limitasi SYNC
+[33m6f3bb20[m HEAD@{30}: Branch: renamed refs/heads/main to refs/heads/main
+[33m6f3bb20[m HEAD@{32}: commit: Update Export Data client
+[33mac9767a[m HEAD@{33}: commit: Update Perbaikan Informasi WEB
+[33mdd47084[m HEAD@{34}: commit: Update Detail Interkoneksi v.2
+[33mc8e19f6[m HEAD@{35}: commit: Update Detail Interkoneksi
+[33m3dfd368[m HEAD@{36}: commit: Update ALERT SEARCHING
+[33m3683cdb[m HEAD@{37}: commit: Update UI 2 FIX
+[33m08b89b3[m HEAD@{38}: commit: Update UI 2
+[33ma45fe7e[m HEAD@{39}: commit: Update UI
+[33mcf77abf[m HEAD@{40}: commit: update : HEADER DAN IMPORT EXPORT INTERKONEKSI
+[33m81e33ad[m HEAD@{41}: commit: update: DATA INTERKONEKSI
+[33me1829f5[m HEAD@{42}: commit: Update RAMADHAN SYNC WO
+[33m25b6ef9[m HEAD@{43}: commit: Update RAMADHAN V2
+[33m5c878e2[m HEAD@{44}: commit: Update RAMADHAN
+[33mc013b54[m HEAD@{45}: commit: Update Edit Delet Client ROL AKTIVATOR
+[33m1064e52[m HEAD@{46}: commit: Update Sync Vlan-FIX
+[33m032cb32[m HEAD@{47}: commit: Update Sync Vlan
+[33m126d12f[m HEAD@{48}: commit: Update Mobile Header View
+[33mb24287d[m HEAD@{49}: commit: Update Mobile Header View
+[33ma76685a[m HEAD@{50}: commit: Fix Header After Mobile View
+[33m363210f[m HEAD@{51}: commit: Update Mobile View FIXED
+[33mf08a350[m HEAD@{52}: commit: Update Mobile View
+[33mee5f889[m HEAD@{53}: commit: Update User View Only
+[33m51ea684[m HEAD@{54}: commit: Update Minor
+[33mb98b647[m HEAD@{55}: commit: Update Global Summary Vlan
+[33mcabd427[m HEAD@{56}: commit: Update Status Client
+[33m8ca448e[m HEAD@{57}: commit: Update Report Bulanan
+[33mcfe8ddc[m HEAD@{58}: commit: Minor Update
+[33ma8789f4[m HEAD@{59}: commit: Logo Login
+[33me9c36f4[m HEAD@{60}: commit: Discard WO Update
+[33m1e79821[m HEAD@{61}: commit: Edit Layout
+[33m3228e84[m HEAD@{62}: commit: Edit WO
+[33m35bfe98[m HEAD@{63}: commit: Sync Spread Sheet New
+[33mc122239[m HEAD@{64}: commit: Sync Spread Sheet FIX
+[33mb49bed1[m HEAD@{65}: commit: Sync Spread Sheet
+[33m5f7855d[m HEAD@{66}: commit: Global Search FIX
+[33me141532[m HEAD@{67}: commit: Ticketing WO
+[33me111e32[m HEAD@{68}: commit: HEADER FIXING
+[33m2a98886[m HEAD@{69}: commit: LOGO NOC FMI
+[33m7e2fe66[m HEAD@{70}: commit: FIX BUGGING
+[33mcb73495[m HEAD@{71}: commit: fix: final bug
+[33m1770e38[m HEAD@{72}: commit: fix: final dashboard cleanup
+[33ma81b771[m HEAD@{73}: commit: fix bug
+[33m9cab9a8[m HEAD@{74}: commit: fix dashboard
+[33mdecec93[m HEAD@{75}: commit: Update Dashboard Utama
+[33m327517d[m HEAD@{76}: commit: Update Missing Data Tools
+[33m1af833f[m HEAD@{77}: commit: Update Tools
+[33m2b1c4ae[m HEAD@{78}: commit: Update Notif
+[33m783fd72[m HEAD@{79}: commit: Update Log dan Tele
+[33m8301825[m HEAD@{80}: commit: Update Logic Role
+[33m78743aa[m HEAD@{81}: commit: Update favicon logo
+[33m7574393[m HEAD@{82}: commit: ROLE
+[33m59a0861[m HEAD@{83}: commit: Perbaikan Login DLL
+[33md89ae73[m HEAD@{84}: commit: Testing without proxy to find 404 cause
+[33m68f0433[m HEAD@{85}: Branch: renamed refs/heads/main to refs/heads/main
+[33m68f0433[m HEAD@{87}: commit: Ignore type errors to force deploy
+[33m374125c[m HEAD@{88}: commit: Fix TypeScript never type error in broadcast page
+[33m3c5d893[m HEAD@{89}: commit: Fix: Rename exported function to proxy
+[33m198216f[m HEAD@{90}: commit: Rename middleware to proxy as per Next.js 16 requirements
+[33m09b15a6[m HEAD@{91}: commit: Morning fix: simplify middleware and config
+[33mc5dc7cc[m HEAD@{92}: commit: Emergency fix: middleware try-catch
+[33m238e2d2[m HEAD@{93}: commit: Final sync with Vercel CLI
+[33mac7689e[m HEAD@{94}: commit: Fix middleware extension to .ts
+[33m1b011ce[m HEAD@{95}: commit: Rename middleware to ts
+[33ma46ccad[m HEAD@{96}: commit: Add Login Page and Middleware Protection
+[33me4c3729[m HEAD@{97}: commit: Remove middleware
+[33m5f0198a[m HEAD@{98}: commit: Fix tracker create suspense
+[33m892539d[m HEAD@{99}: commit: FIX FINAL: Add Suspense boundary
+[33mfc62088[m HEAD@{100}: commit: Fix searchParams with Suspense
+[33m9ab89a1[m HEAD@{101}: commit: Fix searchParams suspense error
+[33me6deda2[m HEAD@{102}: Branch: renamed refs/heads/main to refs/heads/main
+[33me6deda2[m HEAD@{104}: Branch: renamed refs/heads/master to refs/heads/main
+[33me6deda2[m HEAD@{106}: commit (initial): Fresh Start: Final NOC System

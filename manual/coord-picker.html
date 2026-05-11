@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Coordinate Picker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f172a; color: #fff; font-family: monospace; }
+    #toolbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+      background: #1e293b; border-bottom: 1px solid #334155;
+      padding: 10px 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    #toolbar h2 { font-size: 14px; color: #60a5fa; }
+    #coords { font-size: 13px; color: #fbbf24; min-width: 160px; }
+    #log-area {
+      font-size: 12px; background: #0f172a; border: 1px solid #334155;
+      border-radius: 6px; padding: 6px 10px; max-height: 80px;
+      overflow-y: auto; min-width: 400px; flex: 1; color: #86efac;
+      white-space: pre;
+    }
+    #btn-clear {
+      background: #ef4444; border: none; color: #fff; padding: 5px 12px;
+      border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 700;
+    }
+    #btn-copy {
+      background: #3b82f6; border: none; color: #fff; padding: 5px 12px;
+      border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 700;
+    }
+    #hint { font-size: 11px; color: #64748b; }
+    #canvas-wrap {
+      margin-top: 58px;
+      position: relative;
+      display: inline-block;
+      cursor: crosshair;
+    }
+    #main-img { display: block; max-width: 100%; }
+    .dot {
+      position: absolute;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: 2px solid #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 900; color: #fff;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    }
+  </style>
+</head>
+<body>
+
+<div id="toolbar">
+  <h2>🎯 Coordinate Picker</h2>
+  <div id="coords">x: — &nbsp; y: —</div>
+  <div id="hint">Klik pada gambar untuk catat koordinat. Klik kanan untuk hapus titik terakhir.</div>
+  <div id="log-area"></div>
+  <button id="btn-copy" onclick="copyLog()">📋 Copy</button>
+  <button id="btn-clear" onclick="clearAll()">🗑 Clear</button>
+</div>
+
+<div id="canvas-wrap">
+  <img id="main-img" src="img/tab dashboard.png" alt="dashboard" draggable="false"/>
+</div>
+
+<script>
+  const wrap  = document.getElementById('canvas-wrap');
+  const img   = document.getElementById('main-img');
+  const log   = document.getElementById('log-area');
+  const coords= document.getElementById('coords');
+
+  let dots = [];
+  let counter = 1;
+  let naturalW, naturalH, displayW, displayH;
+
+  img.onload = () => {
+    naturalW = img.naturalWidth;
+    naturalH = img.naturalHeight;
+    displayW = img.clientWidth;
+    displayH = img.clientHeight;
+  };
+
+  wrap.addEventListener('mousemove', e => {
+    const rect = img.getBoundingClientRect();
+    const scaleX = naturalW / rect.width;
+    const scaleY = naturalH / rect.height;
+    const rx = Math.round((e.clientX - rect.left) * scaleX);
+    const ry = Math.round((e.clientY - rect.top)  * scaleY);
+    coords.textContent = `x: ${rx}   y: ${ry}`;
+  });
+
+  wrap.addEventListener('click', e => {
+    const rect = img.getBoundingClientRect();
+    const scaleX = naturalW / rect.width;
+    const scaleY = naturalH / rect.height;
+    const rx = Math.round((e.clientX - rect.left) * scaleX);
+    const ry = Math.round((e.clientY - rect.top)  * scaleY);
+
+    // Place dot on display coords
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.textContent = counter;
+    dot.style.left = (e.clientX - rect.left + wrap.getBoundingClientRect().left - wrap.getBoundingClientRect().left) + 'px';
+    dot.style.top  = (e.clientY - rect.top) + 'px';
+    // Recalculate relative to wrap
+    const wrapRect = wrap.getBoundingClientRect();
+    dot.style.left = (e.clientX - wrapRect.left) + 'px';
+    dot.style.top  = (e.clientY - wrapRect.top + document.documentElement.scrollTop) + 'px';
+    wrap.appendChild(dot);
+    dots.push(dot);
+
+    log.textContent += `[${counter}] x=${rx}, y=${ry}\n`;
+    log.scrollTop = log.scrollHeight;
+    counter++;
+  });
+
+  wrap.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    if (dots.length > 0) {
+      wrap.removeChild(dots.pop());
+      counter--;
+      const lines = log.textContent.trim().split('\n');
+      lines.pop();
+      log.textContent = lines.join('\n') + (lines.length ? '\n' : '');
+    }
+  });
+
+  function clearAll() {
+    dots.forEach(d => wrap.removeChild(d));
+    dots = []; counter = 1;
+    log.textContent = '';
+  }
+
+  function copyLog() {
+    navigator.clipboard.writeText(log.textContent).then(() => {
+      document.getElementById('btn-copy').textContent = '✅ Copied!';
+      setTimeout(() => document.getElementById('btn-copy').textContent = '📋 Copy', 1500);
+    });
+  }
+</script>
+</body>
+</html>

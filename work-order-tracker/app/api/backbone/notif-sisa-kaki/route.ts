@@ -1,15 +1,8 @@
 // app/api/backbone/notif-sisa-kaki/route.ts
-// Kirim notifikasi CRITICAL via Telegram ke semua admin
-// ketika sebuah PoP hanya tersisa 1 kaki backbone aktif
+// Kirim notifikasi CRITICAL via Telegram Bot 1 (Logging)
+// ke grup/topic logging ketika sebuah PoP hanya tersisa 1 kaki backbone aktif
 
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
 
 function escapeHtml(str: string): string {
   return str
@@ -18,23 +11,33 @@ function escapeHtml(str: string): string {
     .replace(/>/g, '&gt;');
 }
 
-async function sendMessage(token: string, userId: string, text: string) {
+async function sendToLogGroup(text: string): Promise<{ ok: boolean; error?: string }> {
+  const token  = process.env.TELEGRAM_LOG_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_LOG_GROUP_ID;
+  const topicId = process.env.TELEGRAM_LOG_TOPIC_ID;
+
+  if (!token || !chatId) {
+    return { ok: false, error: 'TELEGRAM_LOG_BOT_TOKEN / TELEGRAM_LOG_GROUP_ID belum diset' };
+  }
+
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      chat_id: userId,
+      chat_id:           chatId,
+      message_thread_id: topicId ? parseInt(topicId) : undefined,
       text,
-      parse_mode: 'HTML',
+      parse_mode:              'HTML',
       disable_web_page_preview: true,
     }),
   });
+
   const data = await res.json();
   if (!data.ok) {
-    console.error(`[notif-sisa-kaki] gagal ke userId=${userId}:`, data.description);
+    console.error('[notif-sisa-kaki] Gagal kirim ke grup:', data.description);
     return { ok: false, error: data.description as string };
   }
-  return { ok: true, error: null };
+  return { ok: true };
 }
 
 export async function POST(request: Request) {
@@ -44,11 +47,11 @@ export async function POST(request: Request) {
       popKode,
       popNama,
       total,
-      downKodes,     // string[] — kode backbone yang sedang down
-      downNamas,     // string[] — nama backbone yang sedang down
-      remainingKode, // string   — satu kode yang masih hidup
-      remainingNama, // string   — nama backbone yang masih hidup
-      activeTickets, // string[] — nomor tiket aktif
+      downKodes,
+      downNamas,
+      remainingKode,
+      remainingNama,
+      activeTickets,
     } = body as {
       popKode:       string;
       popNama:       string;
@@ -62,35 +65,6 @@ export async function POST(request: Request) {
 
     if (!popKode || !popNama) {
       return NextResponse.json({ error: 'popKode dan popNama wajib diisi' }, { status: 400 });
-    }
-
-    const token = process.env.TELEGRAM_APPROVAL_BOT_TOKEN;
-    if (!token) {
-      return NextResponse.json({ error: 'TELEGRAM_APPROVAL_BOT_TOKEN belum diset' }, { status: 500 });
-    }
-
-    // Kumpulkan admin IDs
-    const envIds = (process.env.TELEGRAM_APPROVAL_ADMIN_IDS || '')
-      .split(',').map(s => s.trim()).filter(Boolean);
-
-    const { data: profileAdmins } = await supabaseAdmin
-      .from('profiles')
-      .select('telegram_user_id')
-      .not('telegram_user_id', 'is', null);
-
-    const dbIds = (profileAdmins ?? [])
-      .map((p: any) => String(p.telegram_user_id))
-      .filter(Boolean);
-
-    const adminIds = [...new Set([...envIds, ...dbIds])];
-
-    if (adminIds.length === 0) {
-      return NextResponse.json({
-        success: true,
-        sent: 0,
-        total: 0,
-        warning: 'Tidak ada admin Telegram terdaftar',
-      });
     }
 
     // Format pesan
@@ -108,7 +82,7 @@ export async function POST(request: Request) {
     const text = [
       `🚨 <b>CRITICAL — SISA 1 KAKI BACKBONE</b>`,
       ``,
-      `🏢 <b>PoP</b>     : ${escapeHtml(popNama)} (<code>${escapeHtml(popKode)}</code>)`,
+      `🏢 <b>PoP</b>       : ${escapeHtml(popNama)} (<code>${escapeHtml(popKode)}</code>)`,
       `📊 <b>Total Kaki</b> : ${total}`,
       `🔴 <b>Down (${downKodes.length})</b>:`,
       downList || '  —',
@@ -124,26 +98,11 @@ export async function POST(request: Request) {
       `⚠️ <b>Segera eskalasi! Satu kaki tersisa sebelum total blackout.</b>`,
     ].join('\n');
 
-    // Kirim ke semua admin
-    let sent = 0;
-    const errors: Record<string, string> = {};
+    const { ok, error } = await sendToLogGroup(text);
 
-    await Promise.all(
-      adminIds.map(async (userId) => {
-        const { ok, error } = await sendMessage(token, userId, text);
-        if (ok) sent++;
-        else if (error) errors[userId] = error;
-      })
-    );
+    console.log('[notif-sisa-kaki] popKode:', popKode, '| sent to log group:', ok, error || '');
 
-    console.log('[notif-sisa-kaki] popKode:', popKode, '| sent:', sent, '| errors:', errors);
-
-    return NextResponse.json({
-      success: true,
-      sent,
-      total: adminIds.length,
-      errors: Object.keys(errors).length > 0 ? errors : undefined,
-    });
+    return NextResponse.json({ success: ok, error: error || undefined });
 
   } catch (err: any) {
     console.error('[notif-sisa-kaki] Error:', err.message);

@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panduan Report Backbone NOC — Fibermedia Utility</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      line-height: 1.6;
+    }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar TOC ── */
+    .toc-sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: #0f172a;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      overflow-y: auto;
+      padding: 28px 0 40px;
+      z-index: 100;
+    }
+    .toc-sidebar::-webkit-scrollbar { width: 4px; }
+    .toc-sidebar::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+    .toc-brand {
+      padding: 0 20px 24px;
+      border-bottom: 1px solid #1e293b;
+      margin-bottom: 16px;
+    }
+    .toc-brand-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg,#3b82f6,#2563eb);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; margin-bottom: 10px;
+    }
+    .toc-brand h2 { font-size: 13px; font-weight: 800; color: #fff; line-height: 1.3; }
+    .toc-brand p  { font-size: 11px; color: #475569; margin-top: 2px; }
+    .toc-group-label {
+      font-size: 9px; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: #475569;
+      padding: 12px 20px 4px;
+    }
+    .toc-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 20px; text-decoration: none;
+      color: #94a3b8; font-size: 12.5px; font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .toc-link:hover { color: #fff; background: rgba(255,255,255,0.05); border-left-color: #3b82f6; }
+    .toc-link.active { color: #60a5fa; background: rgba(59,130,246,0.1); border-left-color: #3b82f6; }
+    .toc-link-icon { font-size: 14px; flex-shrink: 0; }
+    .toc-sub-link {
+      display: block; padding: 5px 20px 5px 44px;
+      text-decoration: none; color: #64748b; font-size: 11.5px;
+      transition: color 0.15s;
+    }
+    .toc-sub-link:hover { color: #93c5fd; }
+
+    /* ── Main content ── */
+    .main { margin-left: 260px; flex: 1; }
+
+    /* ── Cover header ── */
+    .cover-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%);
+      padding: 60px 72px 50px;
+      position: relative; overflow: hidden;
+    }
+    .cover-header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 80% 50%, rgba(59,130,246,0.15), transparent 60%);
+    }
+    .cover-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.4);
+      color: #93c5fd; font-size: 11px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      padding: 5px 14px; border-radius: 99px; margin-bottom: 18px;
+    }
+    .cover-header h1 {
+      font-size: 36px; font-weight: 900; color: #fff;
+      letter-spacing: -1px; line-height: 1.15; margin-bottom: 10px;
+    }
+    .cover-header h1 span { color: #60a5fa; }
+    .cover-header p { font-size: 15px; color: #94a3b8; max-width: 520px; }
+    .cover-stats {
+      display: flex; gap: 32px; margin-top: 36px;
+    }
+    .cover-stat {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .cover-stat-val { font-size: 24px; font-weight: 900; color: #fff; }
+    .cover-stat-lbl { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ── Page section ── */
+    .section { padding: 52px 72px; background: #fff; border-bottom: 1px solid #f1f5f9; }
+    .section:nth-child(even) { background: #fafafa; }
+
+    .section-eyebrow {
+      font-size: 10px; font-weight: 800; letter-spacing: 3px;
+      text-transform: uppercase; color: #3b82f6;
+      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+    }
+    .section-eyebrow::after {
+      content: ''; flex: 1; height: 1px; background: #e2e8f0;
+    }
+    .section h2 {
+      font-size: 24px; font-weight: 900; color: #0f172a;
+      margin-bottom: 8px; line-height: 1.2;
+    }
+    .section .section-desc { font-size: 14px; color: #64748b; margin-bottom: 28px; }
+
+    .subsection { margin-bottom: 36px; }
+    .subsection h3 {
+      font-size: 15px; font-weight: 800; color: #0f172a;
+      margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .subsection h3::before {
+      content: ''; width: 4px; height: 18px;
+      background: #3b82f6; border-radius: 2px; display: inline-block;
+    }
+    .subsection p { font-size: 14px; color: #475569; line-height: 1.75; margin-bottom: 10px; }
+    .subsection ul, .subsection ol { padding-left: 20px; margin-bottom: 12px; }
+    .subsection li { font-size: 14px; color: #475569; line-height: 1.75; margin-bottom: 4px; }
+    .subsection li strong { color: #1e293b; }
+
+    /* ── Feature cards grid ── */
+    .feature-grid {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 16px;
+      margin-top: 4px;
+    }
+    .feature-card {
+      border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 18px 20px; background: #fff;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .feature-card:hover { border-color: #93c5fd; box-shadow: 0 4px 16px rgba(59,130,246,0.08); }
+    .feature-card-icon { font-size: 22px; margin-bottom: 10px; }
+    .feature-card h4 { font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
+    .feature-card p  { font-size: 12.5px; color: #64748b; line-height: 1.6; }
+
+    /* ── Status badges ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 99px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+    }
+    .badge::before { content: '●'; font-size: 8px; }
+    .badge-pending  { background: #fef9c3; color: #854d0e; }
+    .badge-progress { background: #dbeafe; color: #1d4ed8; }
+    .badge-solved   { background: #dcfce7; color: #166534; }
+    .badge-cancel   { background: #fee2e2; color: #991b1b; }
+    .badge-unsolved { background: #f3e8ff; color: #6b21a8; }
+    .badge-plain    { background: #f1f5f9; color: #475569; }
+    .badge-blue     { background: #dbeafe; color: #1d4ed8; }
+
+    /* ── Status flow ── */
+    .status-flow {
+      display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+      margin: 16px 0;
+    }
+    .status-node {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 6px; min-width: 110px;
+    }
+    .status-node-dot {
+      width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 900; border: 3px solid;
+    }
+    .status-node-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .status-arrow { font-size: 20px; color: #cbd5e1; padding: 0 4px; margin-bottom: 24px; }
+
+    /* ── Step list ── */
+    .step-list { list-style: none; padding: 0; margin: 0; }
+    .step-item {
+      display: flex; gap: 16px; align-items: flex-start;
+      margin-bottom: 20px; position: relative;
+    }
+    .step-item:not(:last-child)::after {
+      content: ''; position: absolute;
+      left: 16px; top: 38px; bottom: -16px; width: 2px;
+      background: #e2e8f0;
+    }
+    .step-num {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg,#3b82f6,#2563eb);
+      color: #fff; font-size: 13px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+      position: relative; z-index: 1;
+    }
+    .step-body { flex: 1; padding-top: 4px; }
+    .step-body strong { font-size: 14px; color: #0f172a; display: block; margin-bottom: 4px; }
+    .step-body span, .step-body p { font-size: 13.5px; color: #64748b; line-height: 1.65; }
+    .step-note {
+      margin-top: 8px; padding: 10px 14px; border-radius: 8px;
+      font-size: 13px; line-height: 1.6;
+    }
+    .step-note.info    { background: #eff6ff; color: #1d4ed8; border-left: 3px solid #3b82f6; }
+    .step-note.warning { background: #fffbeb; color: #92400e; border-left: 3px solid #f59e0b; }
+    .step-note.success { background: #f0fdf4; color: #166534; border-left: 3px solid #22c55e; }
+    .step-note.danger  { background: #fef2f2; color: #991b1b; border-left: 3px solid #ef4444; }
+
+    /* ── Field table ── */
+    .field-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+    .field-table th {
+      background: #0f172a; color: #fff; padding: 10px 16px;
+      text-align: left; font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .field-table td {
+      padding: 10px 16px; border-bottom: 1px solid #f1f5f9;
+      vertical-align: top; color: #475569;
+    }
+    .field-table tr:nth-child(even) td { background: #f8fafc; }
+    .field-table td:first-child { font-weight: 700; color: #1e293b; white-space: nowrap; }
+    .auto-tag {
+      display: inline-block; padding: 1px 8px; border-radius: 4px;
+      font-size: 10px; font-weight: 700;
+      background: #dcfce7; color: #166534; margin-left: 4px;
+    }
+    .req-tag {
+      display: inline-block; padding: 1px 8px; border-radius: 4px;
+      font-size: 10px; font-weight: 700;
+      background: #fee2e2; color: #991b1b; margin-left: 4px;
+    }
+
+    /* ── Callout ── */
+    .callout {
+      border-radius: 10px; padding: 14px 18px;
+      margin: 14px 0; display: flex; gap: 12px;
+      align-items: flex-start; font-size: 13.5px; line-height: 1.65;
+    }
+    .callout-icon { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+    .callout.info    { background: #eff6ff; border-left: 3px solid #3b82f6; color: #1d4ed8; }
+    .callout.warning { background: #fffbeb; border-left: 3px solid #f59e0b; color: #92400e; }
+    .callout.success { background: #f0fdf4; border-left: 3px solid #22c55e; color: #166534; }
+    .callout.danger  { background: #fef2f2; border-left: 3px solid #ef4444; color: #991b1b; }
+
+    /* ── Update type cards ── */
+    .update-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+    .update-card {
+      border-radius: 12px; padding: 20px 22px;
+      border: 1px solid; position: relative; overflow: hidden;
+    }
+    .update-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .update-card.progress  { border-color: #bfdbfe; background: #f0f7ff; }
+    .update-card.progress::before { background: #3b82f6; }
+    .update-card.pending   { border-color: #fde68a; background: #fffdf0; }
+    .update-card.pending::before  { background: #f59e0b; }
+    .update-card.unsolved  { border-color: #e9d5ff; background: #faf5ff; }
+    .update-card.unsolved::before { background: #a855f7; }
+    .update-card.solved    { border-color: #bbf7d0; background: #f0fdf4; }
+    .update-card.solved::before   { background: #22c55e; }
+    .update-card h4 { font-size: 13px; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .update-card p  { font-size: 13px; color: #475569; line-height: 1.65; }
+    .update-card ul { padding-left: 16px; margin-top: 8px; }
+    .update-card li { font-size: 12.5px; color: #475569; line-height: 1.7; }
+
+    /* ── WA Report box ── */
+    .wa-box {
+      background: #0f172a; border-radius: 12px; overflow: hidden;
+      border: 1px solid #1e293b; margin-top: 8px;
+    }
+    .wa-box-header {
+      background: #075E54; padding: 12px 18px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .wa-box-header span { color: #fff; font-weight: 700; font-size: 13px; }
+    .wa-box-body {
+      padding: 16px 18px; font-family: monospace; font-size: 12.5px;
+      color: #86efac; line-height: 1.8;
+      white-space: pre-wrap;
+    }
+
+    /* ── Divider ── */
+    .divider { border: none; border-top: 2px solid #f1f5f9; margin: 36px 0; }
+
+    /* ── img placeholder ── */
+    .img-placeholder {
+      width: 100%; border-radius: 12px; overflow: hidden;
+      border: 2px dashed #cbd5e1; margin: 16px 0;
+    }
+    .img-placeholder-inner {
+      padding: 48px; background: #f8fafc;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 8px; color: #94a3b8;
+    }
+    .img-placeholder-inner .ph-icon { font-size: 40px; }
+    .img-placeholder-inner span { font-size: 13px; }
+    .img-placeholder img { width: 100%; display: block; }
+
+    /* ── Step image ── */
+    .step-img {
+      margin-top: 12px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+    .step-img img {
+      width: 100%;
+      display: block;
+    }
+    .step-img-caption {
+      display: block;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      padding: 7px 14px;
+      font-size: 11.5px;
+      color: #64748b;
+      font-style: italic;
+    }
+
+    /* ── Print ── */
+    @media print {
+      body { background: #fff; }
+      .toc-sidebar { display: none; }
+      .main { margin-left: 0; }
+      .section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ══ SIDEBAR TOC ══ -->
+  <nav class="toc-sidebar">
+    <div class="toc-brand">
+      <div class="toc-brand-icon">🔌</div>
+      <h2>Report Backbone NOC</h2>
+      <p>Panduan Lengkap Penggunaan</p>
+    </div>
+
+    <div class="toc-group-label">Gambaran Umum</div>
+    <a class="toc-link" href="#sec-intro"><span class="toc-link-icon">📖</span> Pengenalan</a>
+    <a class="toc-link" href="#sec-features"><span class="toc-link-icon">⭐</span> Fitur Utama</a>
+    <a class="toc-link" href="#sec-status"><span class="toc-link-icon">🔖</span> Status Tiket</a>
+    <a class="toc-link" href="#sec-viewmode"><span class="toc-link-icon">👁️</span> View Mode</a>
+
+    <div class="toc-group-label">Panduan Operasional</div>
+    <a class="toc-link" href="#sec-open"><span class="toc-link-icon">➕</span> Open Tiket Baru</a>
+    <a class="toc-sub-link" href="#sec-open">→ Field yang diisi</a>
+    <a class="toc-sub-link" href="#sec-open">→ Tambah impact backbone</a>
+    <a class="toc-link" href="#sec-update"><span class="toc-link-icon">📝</span> Update Tiket</a>
+    <a class="toc-sub-link" href="#sec-update">→ On Progress</a>
+    <a class="toc-sub-link" href="#sec-update">→ Pending</a>
+    <a class="toc-sub-link" href="#sec-update">→ Unsolved & Cancel</a>
+    <a class="toc-sub-link" href="#sec-solved">→ Solved / Close Tiket</a>
+    <a class="toc-link" href="#sec-solved"><span class="toc-link-icon">✅</span> Solved / Close Tiket</a>
+
+    <div class="toc-group-label">Fitur Lanjutan</div>
+    <a class="toc-link" href="#sec-heatmap"><span class="toc-link-icon">🗓️</span> Heatmap & Kalender</a>
+    <a class="toc-link" href="#sec-wa"><span class="toc-link-icon">💬</span> WA Auto Report</a>
+    <a class="toc-link" href="#sec-export"><span class="toc-link-icon">📥</span> Export & Rekap</a>
+    <a class="toc-link" href="#sec-flow"><span class="toc-link-icon">🔄</span> Alur Lengkap</a>
+  </nav>
+
+  <!-- ══ MAIN CONTENT ══ -->
+  <div class="main">
+
+    <!-- COVER HEADER -->
+    <div class="cover-header">
+      <div class="cover-badge">📋 Panduan Modul</div>
+      <h1>Report <span>Backbone NOC</span></h1>
+      <p>Modul pencatatan, monitoring, dan penanganan insiden gangguan jaringan backbone secara terintegrasi dengan Odoo dan WhatsApp.</p>
+      <div class="cover-stats">
+        <div class="cover-stat"><span class="cover-stat-val">5</span><span class="cover-stat-lbl">Status Tiket</span></div>
+        <div class="cover-stat"><span class="cover-stat-val">12</span><span class="cover-stat-lbl">Fitur Utama</span></div>
+        <div class="cover-stat"><span class="cover-stat-val">Auto</span><span class="cover-stat-lbl">WA Report</span></div>
+        <div class="cover-stat"><span class="cover-stat-val">Odoo</span><span class="cover-stat-lbl">Terintegrasi</span></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION: PENGENALAN
+    ══════════════════════════════════════ -->
+    <div class="section" id="sec-intro">
+      <div class="section-eyebrow">Pengenalan</div>
+      <h2>Apa itu Report Backbone NOC?</h2>
+      <p class="section-desc">Sistem manajemen tiket insiden backbone yang terintegrasi dengan Odoo ERP dan WhatsApp Auto Report.</p>
+
+      <div class="subsection">
+        <p>
+          <strong>Report Backbone NOC</strong> adalah modul khusus untuk mencatat dan mengelola setiap insiden
+          gangguan pada jaringan backbone Fibermedia. Setiap gangguan direkam sebagai <strong>tiket</strong>
+          yang terintegrasi langsung dengan sistem <strong>Odoo</strong> untuk eskalasi dan pencatatan log,
+          serta mendukung <strong>WhatsApp Auto Report</strong> untuk penyampaian update ke tim secara otomatis.
+        </p>
+        <div class="callout info">
+          <span class="callout-icon">📍</span>
+          <span>Akses modul ini melalui sidebar kiri → grup <strong>Reporting</strong> → klik <strong>Backbone Report NOC</strong>.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION: FITUR UTAMA
+    ══════════════════════════════════════ -->
+    <div class="section" id="sec-features">
+      <div class="section-eyebrow">Fitur Utama</div>
+      <h2>Apa Saja yang Bisa Dilakukan?</h2>
+      <p class="section-desc">12 fitur utama yang tersedia di modul Report Backbone NOC.</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-card-icon">📋</div>
+          <h4>Daftar Tiket</h4>
+          <p>Menampilkan seluruh tiket insiden backbone beserta status, tanggal, dan link backbone yang terdampak.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card-icon">➕</div>
+          <h4>Buat Tiket Baru</h4>
+          <p>Form untuk mencatat insiden baru, terintegrasi dengan Odoo untuk mendapatkan nomor tiket dan start time otomatis.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card-icon">🔍</div>
+          <h4>Filter & Pencarian</h4>
+          <p>Filter tiket berdasarkan status, tanggal, atau kata kunci nama link/lokasi backbone yang terdampak.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card-icon">📝</div>
+          <h4>Update Tiket</h4>
+          <p>Tambahkan catatan progres penanganan yang otomatis terkirim sebagai log note ke Odoo.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card-icon">✅</div>
+          <h4>Close Tiket</h4>
+          <p>Form solusi lengkap dengan summary otomatis saat tiket diselesaikan, termasuk data tagging dan koordinat lokasi.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card-icon">📊</div>
+          <h4>Rekap Insiden</h4>
+          <p>Statistik insiden — total tiket, durasi rata-rata downtime, dan frekuensi gangguan per backbone.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card-icon">📥</div>
+          <h4>Export Data</h4>
+          <p>Export daftar tiket ke format CSV/Excel untuk laporan SLA bulanan atau analisis manajemen.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card-icon">🗂️</div>
+          <h4>View Mode Table & Kanban</h4>
+          <p>Tampilkan daftar tiket dalam mode tabel (detail) atau kanban (visual per status). Bisa toggle sesuai kebutuhan.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card-icon">🔥</div>
+          <h4>Heatmap</h4>
+          <p>Visualisasi intensitas insiden per segmen backbone dalam bentuk heatmap untuk identifikasi titik rawan.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card-icon">🗓️</div>
+          <h4>Heatmap Calendar</h4>
+          <p>Tampilan kalender yang menunjukkan distribusi insiden per hari, memudahkan analisis pola gangguan bulanan.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card-icon">💬</div>
+          <h4>WA Auto Report</h4>
+          <p>Generate laporan WhatsApp otomatis berdasarkan tiket aktif (Pending & On Progress) beserta update terakhir.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card-icon">🔗</div>
+          <h4>Integrasi Odoo</h4>
+          <p>Semua aksi (open, update, close) otomatis tercatat sebagai log note di tiket Odoo yang bersangkutan.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION: STATUS TIKET
+    ══════════════════════════════════════ -->
+    <div class="section" id="sec-status">
+      <div class="section-eyebrow">Status Tiket</div>
+      <h2>Siklus Hidup Tiket</h2>
+      <p class="section-desc">Setiap tiket memiliki 5 kemungkinan status yang mencerminkan kondisi penanganan insiden.</p>
+
+      <!-- Flow -->
+      <div class="status-flow">
+        <div class="status-node">
+          <div class="status-node-dot" style="background:#fef9c3;border-color:#f59e0b;color:#854d0e;">⏳</div>
+          <span class="status-node-label" style="color:#854d0e;">Pending</span>
+        </div>
+        <span class="status-arrow">→</span>
+        <div class="status-node">
+          <div class="status-node-dot" style="background:#dbeafe;border-color:#3b82f6;color:#1d4ed8;">⚡</div>
+          <span class="status-node-label" style="color:#1d4ed8;">On Progress</span>
+        </div>
+        <span class="status-arrow">→</span>
+        <div class="status-node">
+          <div class="status-node-dot" style="background:#dcfce7;border-color:#22c55e;color:#166534;">✓</div>
+          <span class="status-node-label" style="color:#166534;">Solved</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;margin:0 8px;margin-bottom:24px;">
+          <span style="color:#cbd5e1;font-size:13px;">atau</span>
+        </div>
+        <div class="status-node">
+          <div class="status-node-dot" style="background:#fee2e2;border-color:#ef4444;color:#991b1b;">✕</div>
+          <span class="status-node-label" style="color:#991b1b;">Cancel</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;margin:0 8px;margin-bottom:24px;">
+          <span style="color:#cbd5e1;font-size:13px;">atau</span>
+        </div>
+        <div class="status-node">
+          <div class="status-node-dot" style="background:#f3e8ff;border-color:#a855f7;color:#6b21a8;">⚠</div>
+          <span class="status-node-label" style="color:#6b21a8;">Unsolved</span>
+        </div>
+      </div>
+
+      <table class="field-table">
+        <thead>
+          <tr><th>Status</th><th>Kondisi</th><th>Tindakan yang Diperlukan</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-pending">PENDING</span></td>
+            <td>Insiden terdeteksi, belum ada tindakan aktif dari tim</td>
+            <td>Segera eskalasi dan mulai penanganan. Update berkala dengan alasan jika penanganan tertunda.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-progress">ON PROGRESS</span></td>
+            <td>Tim sedang aktif menangani gangguan (di lapangan atau remote)</td>
+            <td>Update tiket setiap 30 menit dengan action yang sedang dijalankan.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-solved">SOLVED</span></td>
+            <td>Gangguan sudah teratasi, jaringan kembali normal</td>
+            <td>Isi form close tiket dengan data resolusi lengkap. Tiket diarsipkan otomatis.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-cancel">CANCEL</span></td>
+            <td>Tiket dibatalkan (false alarm / bukan gangguan sebenarnya)</td>
+            <td>Wajib mengisi reason pembatalan yang akan tercatat di log Odoo.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-unsolved">UNSOLVED</span></td>
+            <td>Gangguan tidak berhasil diselesaikan dalam periode tertentu</td>
+            <td>Wajib mengisi reason yang akan tercatat di log Odoo. Eskalasi ke level lebih tinggi.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION: VIEW MODE
+    ══════════════════════════════════════ -->
+    <div class="section" id="sec-viewmode">
+      <div class="section-eyebrow">View Mode</div>
+      <h2>Mode Tampilan Tiket</h2>
+      <p class="section-desc">Daftar tiket dapat ditampilkan dalam dua mode sesuai kebutuhan NOC.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:8px;">
+        <div style="border:1px solid #e2e8f0;border-radius:12px;padding:22px;background:#fff;">
+          <div style="font-size:28px;margin-bottom:12px;">📊</div>
+          <h4 style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:8px;">Mode Table</h4>
+          <p style="font-size:13px;color:#64748b;line-height:1.7;">Menampilkan tiket dalam baris dan kolom. Cocok untuk melihat detail lengkap banyak tiket sekaligus, sorting berdasarkan kolom, dan melakukan filter data.</p>
+          <div style="margin-top:10px;padding:8px 12px;background:#f8fafc;border-radius:8px;font-size:12px;color:#64748b;">
+            ✔ Tampilan detail &nbsp;✔ Multi-kolom &nbsp;✔ Sortable
+          </div>
+        </div>
+        <div style="border:1px solid #e2e8f0;border-radius:12px;padding:22px;background:#fff;">
+          <div style="font-size:28px;margin-bottom:12px;">🗃️</div>
+          <h4 style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:8px;">Mode Kanban</h4>
+          <p style="font-size:13px;color:#64748b;line-height:1.7;">Menampilkan tiket dalam kartu-kartu yang dikelompokkan per status. Cocok untuk monitoring visual progress penanganan dan melihat distribusi tiket per status secara cepat.</p>
+          <div style="margin-top:10px;padding:8px 12px;background:#f8fafc;border-radius:8px;font-size:12px;color:#64748b;">
+            ✔ Visual per status &nbsp;✔ Card view &nbsp;✔ Quick overview
+          </div>
+        </div>
+      </div>
+      <div class="callout info" style="margin-top:16px;">
+        <span class="callout-icon">💡</span>
+        <span>Tombol toggle antara mode Table dan Kanban tersedia di pojok kanan atas halaman daftar tiket. Pilihan mode tersimpan per sesi.</span>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION: OPEN TIKET BARU
+    ══════════════════════════════════════ -->
+    <div class="section" id="sec-open">
+      <div class="section-eyebrow">Panduan Operasional</div>
+      <h2>Cara Open Tiket Baru</h2>
+      <p class="section-desc">Ikuti langkah berikut setiap kali terjadi insiden gangguan backbone.</p>
+
+      <ol class="step-list">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Buka halaman Report Backbone NOC</strong>
+            <span>Klik menu <strong>Backbone Report NOC</strong> di sidebar kiri, di bawah grup <em>Reporting</em>.</span>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Klik tombol "Open New Ticket" di pojok kanan atas</strong>
+            <span>Form input tiket baru akan terbuka di bawah tombol tersebut.</span>
+            <div class="step-img">
+              <img src="img/TUTOR OPEN TIKET BB/OPEN NEW TIKET.jpg" alt="Open New Ticket"/>
+              <span class="step-img-caption">Tampilan tombol Open New Ticket di pojok kanan atas halaman.</span>
+            </div>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Buat tiket di Odoo terlebih dahulu</strong>
+            <span>Klik tombol <strong>"Buat Tiket Odoo"</strong> pada form. Ini akan membuat tiket di sistem Odoo dan secara otomatis mengisi <strong>Nomor Tiket</strong> dan <strong>Start Time</strong> pada form web.</span>
+            <div class="step-img">
+              <img src="img/TUTOR OPEN TIKET BB/BUAT TIKET ODOO.jpg" alt="Buat Tiket Odoo"/>
+              <span class="step-img-caption">Klik tombol Buat Tiket Odoo untuk mendapatkan nomor tiket dan start time otomatis.</span>
+            </div>
+            <div class="step-note info">ℹ️ Tiket Odoo diperlukan agar insiden tercatat secara resmi di sistem helpdesk dan mendapatkan nomor referensi yang digunakan untuk pelaporan SLA.</div>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>Buka Odoo — Eskalasi tiket dan uncheck "Is RFO"</strong>
+            <span>Setelah tiket terbuat, buka web Odoo, temukan tiket yang baru dibuat, lalu lakukan dua hal berikut:</span>
+            <ul style="margin:8px 0 8px 4px;padding-left:16px;">
+              <li style="font-size:13.5px;color:#475569;margin-bottom:4px;">Pastikan checkbox <strong>Is RFO</strong> dalam kondisi <strong>tidak dicentang (uncheck)</strong></li>
+              <li style="font-size:13.5px;color:#475569;">Buka tab <strong>Escalate Ticket</strong> → klik tombol <strong>ESCALATE</strong> (nomor tiket, subject, dan field team sudah terisi otomatis)</li>
+            </ul>
+            <div class="step-img">
+              <img src="img/TUTOR OPEN TIKET BB/ESCALATE ODOO.jpg" alt="Escalate Tiket di Odoo"/>
+              <span class="step-img-caption">Tampilan Odoo — pastikan Is RFO di-uncheck, lalu klik ESCALATE pada tab Escalate Ticket.</span>
+            </div>
+            <div class="step-note warning">⚠️ Langkah ini wajib dilakukan sebelum melanjutkan pengisian form. Is RFO yang tidak di-uncheck dapat menyebabkan tiket tidak terproses dengan benar di sistem Odoo.</div>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <strong>Kembali ke web — Isi form report</strong>
+            <span>Lengkapi semua field pada form di bawah tombol "Buat Tiket Odoo":</span>
+            <div class="step-img">
+              <img src="img/TUTOR OPEN TIKET BB/BUAT REPORT.jpg" alt="Isi Form Report"/>
+              <span class="step-img-caption">Form pengisian report backbone — isi semua field yang tersedia.</span>
+            </div>
+
+            <div style="margin-top:14px;padding:12px 16px;background:#1e293b;border-radius:8px;border-left:3px solid #f59e0b;">
+              <p style="font-size:13px;font-weight:700;color:#fcd34d;margin-bottom:8px;">📌 Pengisian Field Kode Backbone</p>
+              <p style="font-size:13px;color:#94a3b8;line-height:1.65;">Pada bagian <strong style="color:#fff;">Kode Backbone</strong>, pilih kode yang sesuai dari dropdown. Jika backbone yang terdampak belum memiliki kode, klik tombol <strong style="color:#f59e0b;">+ Kode Baru</strong> untuk mendaftarkan kode backbone baru.</p>
+            </div>
+
+            <div class="step-img" style="margin-top:12px;">
+              <img src="img/TUTOR OPEN TIKET BB/KODE BB BUTTON.jpg" alt="Tombol Kode Backbone Baru"/>
+              <span class="step-img-caption">Klik tombol <strong>+ Kode Baru</strong> untuk menambahkan kode backbone yang belum terdaftar.</span>
+            </div>
+
+            <div class="step-img" style="margin-top:12px;">
+              <img src="img/TUTOR OPEN TIKET BB/TAMBAH KODE BB BARU.jpg" alt="Modal Tambah Kode Backbone Baru"/>
+              <span class="step-img-caption">Isi nama link dengan format <strong>NEAR END &lt;&gt; FAR END V [VARIANT]</strong>. Nomor kode otomatis terisi secara urutan. Setelah disimpan, kode baru harus menunggu approval Leader / SPV NOC sebelum bisa digunakan.</span>
+            </div>
+
+            <div class="step-note warning" style="margin-top:10px;">
+              ⚠️ Pembuatan kode backbone baru harus mendapat persetujuan <strong>Leader / SPV NOC</strong> sebelum dapat digunakan pada tiket.
+            </div>
+          </div>
+        </li>
+      </ol>
+
+      <table class="field-table">
+        <thead>
+          <tr><th>Field</th><th>Keterangan</th><th>Contoh</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Hari & Tanggal Report <span class="req-tag">WAJIB</span></td>
+            <td>Tanggal insiden terjadi</td>
+            <td>Senin, 04 Mei 2026</td>
+          </tr>
+          <tr>
+            <td>Open Ticket (Team) <span class="req-tag">WAJIB</span></td>
+            <td>Nama NOC yang membuka tiket</td>
+            <td>Ocha / Shidiq</td>
+          </tr>
+          <tr>
+            <td>Nomor Ticket <span class="auto-tag">AUTO</span></td>
+            <td>Otomatis terisi setelah buat tiket Odoo</td>
+            <td>INC-2026-0524</td>
+          </tr>
+          <tr>
+            <td>Subject Ticket / Email <span class="auto-tag">AUTO</span></td>
+            <td>Otomatis terisi dari judul tiket Odoo</td>
+            <td>Link Down SBP-COMET</td>
+          </tr>
+          <tr>
+            <td>Jenis Problem <span class="req-tag">WAJIB</span></td>
+            <td>Kategori jenis gangguan yang terjadi</td>
+            <td>Link Down, Fiber Cut, Power Failure, dst.</td>
+          </tr>
+          <tr>
+            <td>Status Case <span class="req-tag">WAJIB</span></td>
+            <td>Status awal tiket saat dibuka</td>
+            <td>Pending / On Progress</td>
+          </tr>
+          <tr>
+            <td>Start Time <span class="auto-tag">AUTO</span></td>
+            <td>Otomatis terisi dari waktu buat tiket Odoo</td>
+            <td>04/05/2026 10:30</td>
+          </tr>
+          <tr>
+            <td>Priority <span class="req-tag">WAJIB</span></td>
+            <td>Tingkat prioritas penanganan insiden</td>
+            <td>Low / Medium / High / Critical</td>
+          </tr>
+          <tr>
+            <td>Kode Backbone <span class="req-tag">WAJIB</span></td>
+            <td>Kode segmen backbone yang terdampak. Jika backbone belum ada kodenya, buat kode baru dengan persetujuan Leader/SPV NOC.</td>
+            <td>SBP-COMET / SBP-STAR / BB-001</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Gambar input kode backbone -->
+      <div class="step-img" style="margin-top:16px;">
+        <img src="img/TUTOR OPEN TIKET BB/INPUT KODE BB.jpg" alt="Input Kode Backbone"/>
+        <span class="step-img-caption">Contoh pengisian field Kode Backbone sesuai segmen yang terdampak.</span>
+      </div>
+
+      <ol class="step-list" style="margin-top:20px;">
+        <li class="step-item">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <strong>Simpan tiket</strong>
+            <span>Klik <strong>Simpan</strong>. Tiket akan muncul di daftar dengan status sesuai yang dipilih dan nomor tiket dari Odoo.</span>
+            <div class="step-note success">✅ Tiket berhasil dibuat. Semua data terintegrasi otomatis ke Odoo sebagai log note.</div>
+          </div>
+        </li>
+      </ol>
+
+      <hr class="divider"/>
+
+      <div class="subsection">
+        <h3>Menambahkan Impact Backbone Tambahan</h3>
+        <p>Jika satu insiden berdampak pada <strong>lebih dari satu segmen backbone</strong>, atau jika ingin menambahkan impact baru setelah tiket dibuat:</p>
+        <ol class="step-list">
+          <li class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <strong>Klik tombol "Open New Ticket" kembali</strong>
+              <span>Kali ini <strong>tidak perlu membuat tiket Odoo baru</strong>. Langsung isi form di bawahnya.</span>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <strong>Isi semua field sama dengan tiket utama</strong>
+              <span>Gunakan <strong>nomor tiket Odoo yang sama</strong> dengan insiden yang sudah ada.</span>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <strong>Masukkan kode backbone tambahan yang terdampak</strong>
+              <span>Isi field <strong>Kode Backbone</strong> dengan kode segmen yang ingin ditambahkan.</span>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <strong>Simpan</strong>
+              <span>Impact backbone tambahan akan terhubung dengan tiket utama yang sama.</span>
+            </div>
+          </li>
+        </ol>
+        <div class="callout warning">
+          <span class="callout-icon">⚠️</span>
+          <span>Jangan buat tiket Odoo baru untuk impact backbone tambahan dari insiden yang sama. Gunakan nomor tiket Odoo yang sudah ada agar semua log tercatat di satu tiket.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION: UPDATE TIKET
+    ══════════════════════════════════════ -->
+    <div class="section" id="sec-update">
+      <div class="section-eyebrow">Panduan Operasional</div>
+      <h2>Cara Update Tiket</h2>
+      <p class="section-desc">Update bisa dilakukan dari mode Table maupun Kanban dengan klik tombol <strong>Update</strong> pada tiket yang bersangkutan.</p>
+
+      <div class="callout info" style="margin-bottom:24px;">
+        <span class="callout-icon">🔗</span>
+        <span><strong>Semua action update</strong> yang dimasukkan akan otomatis terkirim sebagai <strong>log note ke tiket Odoo</strong> yang bersangkutan, sehingga histori penanganan tersimpan di kedua sistem.</span>
+      </div>
+
+      <div class="update-grid">
+
+        <!-- ON PROGRESS -->
+        <div class="update-card progress">
+          <h4><span class="badge badge-progress">ON PROGRESS</span></h4>
+          <p>Ketika tiket diupdate menjadi <em>On Progress</em>, akan muncul field untuk mengisi action yang sedang dijalankan oleh team.</p>
+          <ul>
+            <li>Isi deskripsi tindakan yang sedang dikerjakan</li>
+            <li>Contoh: <em>"Tim lapangan menuju lokasi POP Sudirman"</em></li>
+            <li>Action ini akan otomatis digunakan oleh <strong>WA Auto Report</strong></li>
+            <li>Setiap update tersimpan beserta timestamp dan nama user</li>
+          </ul>
+        </div>
+
+        <!-- PENDING -->
+        <div class="update-card pending">
+          <h4><span class="badge badge-pending">PENDING</span></h4>
+          <p>Jika tiket pending lebih lama dari perkiraan, NOC perlu mengupdate dengan alasan keterlambatan penanganan.</p>
+          <ul>
+            <li>Isi alasan tiket masih dalam status Pending</li>
+            <li>Contoh: <em>"Menunggu konfirmasi dari tim NOC regional"</em></li>
+            <li>Update alasan juga akan terinput ke <strong>WA Auto Report</strong></li>
+            <li>Tersimpan sebagai log note di Odoo</li>
+          </ul>
+        </div>
+
+        <!-- UNSOLVED & CANCEL -->
+        <div class="update-card unsolved">
+          <h4>
+            <span class="badge badge-unsolved">UNSOLVED</span>&nbsp;
+            <span class="badge badge-cancel">CANCEL</span>
+          </h4>
+          <p>Jika tiket ditandai Unsolved atau Cancel, <strong>wajib menyertakan reason</strong> yang akan terinput sebagai log note ke Odoo.</p>
+          <ul>
+            <li>Isi alasan tiket tidak terselesaikan atau dibatalkan</li>
+            <li>Contoh Cancel: <em>"False alarm, sinyal kembali normal tanpa tindakan"</em></li>
+            <li>Contoh Unsolved: <em>"Eskalasi ke vendor, menunggu part pengganti"</em></li>
+            <li>Reason wajib diisi — tidak bisa disimpan jika kosong</li>
+          </ul>
+        </div>
+
+        <!-- SOLVED -->
+        <div class="update-card solved">
+          <h4><span class="badge badge-solved">SOLVED</span></h4>
+          <p>Status <em>Solved</em> digunakan untuk close tiket. Terdapat form khusus yang menghasilkan <strong>summary otomatis</strong> siap kirim ke WhatsApp.</p>
+          <ul>
+            <li>Form lengkap wajib diisi sebelum tiket bisa ditutup</li>
+            <li>Summary otomatis terbentuk setelah semua field terisi</li>
+            <li>Tiket hilang dari WA Auto Report setelah Solved</li>
+            <li>Detail field ada di bagian <strong>Close Tiket</strong> di bawah</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION: SOLVED / CLOSE TIKET
+    ══════════════════════════════════════ -->
+    <div class="section" id="sec-solved">
+      <div class="section-eyebrow">Panduan Operasional</div>
+      <h2>Solved / Close Tiket</h2>
+      <p class="section-desc">Proses penutupan tiket yang menghasilkan summary laporan otomatis.</p>
+
+      <div class="callout danger" style="margin-bottom:24px;">
+        <span class="callout-icon">🚫</span>
+        <span>Tutup tiket hanya jika gangguan sudah <strong>benar-benar teratasi</strong> dan jaringan sudah kembali normal. Tiket yang sudah Solved tidak dapat dibuka kembali.</span>
+      </div>
+
+      <div class="subsection">
+        <h3>Field yang Harus Diisi Saat Close Tiket</h3>
+        <table class="field-table">
+          <thead>
+            <tr><th>Field</th><th>Keterangan</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Closed Ticket (Team) <span class="req-tag">WAJIB</span></td>
+              <td>Nama NOC yang menutup tiket / menangani penyelesaian</td>
+            </tr>
+            <tr>
+              <td>Problem <span class="req-tag">WAJIB</span></td>
+              <td>Deskripsi masalah yang menyebabkan insiden (root cause)</td>
+            </tr>
+            <tr>
+              <td>Near End & Far End <span class="req-tag">WAJIB</span></td>
+              <td>
+                Input full CLI hasil pengecekan power di kedua sisi link.<br/>
+                <span style="color:#059669;font-size:12px;">✨ Sistem akan otomatis meringkas nilai power dari CLI yang diinput — NOC tidak perlu menghitung manual.</span>
+              </td>
+            </tr>
+            <tr>
+              <td>Status Case <span class="req-tag">WAJIB</span></td>
+              <td>Status akhir setelah penanganan selesai</td>
+            </tr>
+            <tr>
+              <td>Regional <span class="req-tag">WAJIB</span></td>
+              <td>Regional/area lokasi gangguan backbone</td>
+            </tr>
+            <tr>
+              <td>Problem & Action <span class="req-tag">WAJIB</span></td>
+              <td>Ringkasan masalah dan tindakan yang dilakukan untuk menyelesaikannya</td>
+            </tr>
+            <tr>
+              <td>Titik Koordinat / Data Tagging <span class="req-tag">WAJIB</span></td>
+              <td>Koordinat GPS lokasi gangguan untuk keperluan dokumentasi dan tagging peta</td>
+            </tr>
+            <tr>
+              <td>Alamat Problem <span class="req-tag">WAJIB</span></td>
+              <td>Alamat fisik lokasi gangguan (jalan, kelurahan, kota)</td>
+            </tr>
+            <tr>
+              <td>Hari & Tanggal Closed <span class="auto-tag">AUTO</span></td>
+              <td>Otomatis terisi dengan waktu saat tiket di-solve. Masih bisa diedit untuk penyesuaian jika diperlukan.</td>
+            </tr>
+            <tr>
+              <td>End Time <span class="auto-tag">AUTO</span></td>
+              <td>Otomatis terisi dengan jam saat tiket di-solve. Masih bisa diedit untuk penyesuaian waktu yang akurat.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="subsection">
+        <h3>Hasil Setelah Close Tiket</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="callout success">
+            <span class="callout-icon">📋</span>
+            <span><strong>Summary Otomatis</strong> — Setelah semua field terisi dan disimpan, sistem menghasilkan teks summary yang bisa langsung di-copy ke WhatsApp atau email laporan.</span>
+          </div>
+          <div class="callout info">
+            <span class="callout-icon">💬</span>
+            <span><strong>WA Report Terupdate</strong> — Tiket yang sudah Solved otomatis hilang dari daftar WA Auto Report, sehingga laporan WA selalu menampilkan tiket aktif saja.</span>
+          </div>
+        </div>
+      </div>
+
+      <ol class="step-list" style="margin-top:8px;">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Verifikasi jaringan sudah normal</strong>
+            <span>Pastikan link UP, ping normal, dan tidak ada laporan lanjutan dari client sebelum menutup tiket.</span>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Klik tombol "Update" pada tiket</strong>
+            <span>Bisa dari mode Table atau Kanban. Pilih status <strong>Solved</strong>.</span>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Isi semua field form close tiket</strong>
+            <span>Lengkapi seluruh field termasuk CLI Near End/Far End, koordinat lokasi, dan waktu selesai.</span>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>Simpan — Summary otomatis muncul</strong>
+            <span>Setelah disimpan, sistem menampilkan teks summary laporan yang siap di-copy ke WhatsApp.</span>
+            <div class="step-note success">✅ Tiket berubah status menjadi <strong>SOLVED</strong>, tercatat di Odoo, dan hilang dari daftar WA Auto Report.</div>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION: HEATMAP
+    ══════════════════════════════════════ -->
+    <div class="section" id="sec-heatmap">
+      <div class="section-eyebrow">Fitur Lanjutan</div>
+      <h2>Heatmap & Heatmap Calendar</h2>
+      <p class="section-desc">Visualisasi pola insiden untuk analisis titik rawan dan tren gangguan.</p>
+
+      <!-- HEATMAP -->
+      <div class="subsection">
+        <h3>🔥 Heatmap — Sebaran Insiden Backbone</h3>
+        <p>Menampilkan <strong>peta sebaran lokasi insiden backbone</strong> secara geografis. Setiap titik pada peta mewakili lokasi gangguan berdasarkan data <em>Alamat Problem</em> yang diinput saat close tiket.</p>
+
+        <div class="step-img" style="margin-bottom:16px;">
+          <img src="img/TUTOR OPEN TIKET BB/HEATMAP.jpg" alt="Heatmap Sebaran Insiden Backbone"/>
+          <span class="step-img-caption">Heatmap sebaran insiden backbone — ukuran lingkaran menunjukkan jumlah insiden di lokasi tersebut.</span>
+        </div>
+
+        <table class="field-table">
+          <thead><tr><th>Elemen</th><th>Keterangan</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Lingkaran Kuning 🟡</strong></td>
+              <td>Lokasi dengan <strong>1–2 insiden</strong> — intensitas rendah</td>
+            </tr>
+            <tr>
+              <td><strong>Lingkaran Orange 🟠</strong></td>
+              <td>Lokasi dengan <strong>3–5 insiden</strong> — intensitas sedang</td>
+            </tr>
+            <tr>
+              <td><strong>Lingkaran Merah 🔴</strong></td>
+              <td>Lokasi dengan <strong>6+ insiden</strong> — titik rawan, intensitas tinggi</td>
+            </tr>
+            <tr>
+              <td><strong>Ukuran Lingkaran</strong></td>
+              <td>Semakin besar lingkaran, semakin banyak jumlah insiden di lokasi tersebut</td>
+            </tr>
+            <tr>
+              <td><strong>Filter Atas</strong></td>
+              <td>Filter berdasarkan status (Semua / Aktif / Solved / Cancel) dan Regional</td>
+            </tr>
+            <tr>
+              <td><strong>Klik Lingkaran</strong></td>
+              <td>Menampilkan detail tiket-tiket yang terjadi di lokasi tersebut</td>
+            </tr>
+            <tr>
+              <td><strong>Semua Terpetakan</strong></td>
+              <td>Indikator jumlah insiden dan lokasi yang berhasil dipetakan. Jika ada tiket tanpa koordinat, tidak akan muncul di peta.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout warning">
+          <span class="callout-icon">⚠️</span>
+          <span><strong>Pertama kali membuka Heatmap</strong> — Klik tombol <strong>"Semua Terpetakan"</strong> terlebih dahulu agar semua data insiden dimuat ke peta. Data lokasi diambil dari field <em>Titik Koordinat / Alamat Problem</em> yang diisi saat close tiket.</span>
+        </div>
+
+        <p style="font-size:14px;color:#475569;margin-top:12px;"><strong>Kegunaan Heatmap:</strong></p>
+        <ul style="padding-left:18px;margin-top:6px;">
+          <li style="font-size:13.5px;color:#475569;margin-bottom:4px;">Identifikasi area/lokasi yang paling sering mengalami gangguan backbone</li>
+          <li style="font-size:13.5px;color:#475569;margin-bottom:4px;">Prioritaskan program maintenance preventif pada titik rawan</li>
+          <li style="font-size:13.5px;color:#475569;margin-bottom:4px;">Bahan analisis jaringan untuk laporan teknis dan perencanaan infrastruktur</li>
+          <li style="font-size:13.5px;color:#475569;">Korelasi lokasi insiden dengan kondisi geografis atau faktor eksternal</li>
+        </ul>
+      </div>
+
+      <hr class="divider"/>
+
+      <!-- HEATMAP CALENDAR -->
+      <div class="subsection">
+        <h3>🗓️ Heatmap Calendar — Kalender Frekuensi Insiden</h3>
+        <p>Menampilkan <strong>distribusi insiden per hari</strong> dalam tampilan kalender tahunan, lengkap dengan statistik bulanan dan mingguan.</p>
+
+        <div class="step-img" style="margin-bottom:16px;">
+          <img src="img/TUTOR OPEN TIKET BB/HEATMAP CALENDAR.jpg" alt="Heatmap Calendar Frekuensi Insiden"/>
+          <span class="step-img-caption">Kalender Frekuensi Insiden — visualisasi pola gangguan per hari sepanjang tahun 2026.</span>
+        </div>
+
+        <table class="field-table">
+          <thead><tr><th>Elemen</th><th>Keterangan</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Total Insiden</strong></td>
+              <td>Jumlah total seluruh tiket insiden yang tercatat dalam tahun berjalan</td>
+            </tr>
+            <tr>
+              <td><strong>Hari Aktif</strong></td>
+              <td>Jumlah hari yang memiliki minimal 1 insiden sepanjang tahun</td>
+            </tr>
+            <tr>
+              <td><strong>Streak Terpanjang</strong></td>
+              <td>Jumlah hari berturut-turut yang memiliki insiden (tanpa hari kosong)</td>
+            </tr>
+            <tr>
+              <td><strong>Hari Tersibuk</strong></td>
+              <td>Hari dengan jumlah insiden terbanyak dalam satu hari</td>
+            </tr>
+            <tr>
+              <td><strong>Grid Kalender</strong></td>
+              <td>Setiap kotak = 1 hari. Warna lebih hijau/terang = lebih banyak insiden. Hover sel untuk melihat detail tiket hari tersebut.</td>
+            </tr>
+            <tr>
+              <td><strong>Distribusi Bulanan</strong></td>
+              <td>Grafik batang total insiden per bulan — mudah membandingkan tren antar bulan</td>
+            </tr>
+            <tr>
+              <td><strong>Distribusi Hari</strong></td>
+              <td>Grafik batang total insiden per hari dalam seminggu — identifikasi hari yang paling sering terjadi gangguan</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="font-size:14px;color:#475569;margin-top:12px;"><strong>Kegunaan Heatmap Calendar:</strong></p>
+        <ul style="padding-left:18px;margin-top:6px;">
+          <li style="font-size:13.5px;color:#475569;margin-bottom:4px;">Identifikasi bulan atau periode dengan frekuensi insiden tertinggi</li>
+          <li style="font-size:13.5px;color:#475569;margin-bottom:4px;">Analisis pola hari — apakah insiden lebih sering terjadi di hari tertentu</li>
+          <li style="font-size:13.5px;color:#475569;margin-bottom:4px;">Korelasi insiden dengan faktor cuaca musiman atau jadwal maintenance</li>
+          <li style="font-size:13.5px;color:#475569;">Bahan evaluasi kinerja NOC dan perencanaan SDM shift berdasarkan pola historis</li>
+        </ul>
+
+        <div class="callout info">
+          <span class="callout-icon">💡</span>
+          <span>Hover pada sel kalender untuk melihat daftar tiket yang terjadi pada hari tersebut. Klik sel untuk membuka detail lengkap tiket-tiket di hari itu.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION: WA AUTO REPORT
+    ══════════════════════════════════════ -->
+    <div class="section" id="sec-wa">
+      <div class="section-eyebrow">Fitur Lanjutan</div>
+      <h2>WA Auto Report</h2>
+      <p class="section-desc">Generate laporan WhatsApp otomatis berdasarkan tiket aktif dan update terakhir.</p>
+
+      <div class="subsection">
+        <h3>Cara Kerja WA Auto Report</h3>
+        <p>
+          Fitur WA Auto Report secara otomatis <strong>membaca semua tiket yang berstatus Pending dan On Progress</strong>,
+          lalu menyusunnya menjadi format laporan WhatsApp yang siap dikirim. Laporan menyesuaikan
+          update terbaru yang sudah diinput oleh NOC pada setiap tiket.
+        </p>
+        <ol class="step-list">
+          <li class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <strong>Buka fitur WA Auto Report</strong>
+              <span>Klik tombol <strong>WA Report</strong> yang tersedia di halaman Report Backbone NOC.</span>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <strong>Sistem membaca tiket aktif secara otomatis</strong>
+              <span>Semua tiket berstatus <span class="badge badge-pending">PENDING</span> dan <span class="badge badge-progress">ON PROGRESS</span> otomatis dimasukkan ke dalam laporan.</span>
+            </div>
+          </li>
+          <li class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <strong>Laporan sudah terbentuk — langsung copy</strong>
+              <span>Teks laporan sudah tersusun rapi dan bisa langsung di-copy untuk dikirim ke grup WhatsApp NOC.</span>
+              <div class="step-note success">✅ Tiket yang sudah Solved tidak akan muncul di laporan WA — laporan selalu up-to-date dengan kondisi terkini.</div>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="subsection">
+        <h3>Contoh Format Laporan WA</h3>
+        <div class="wa-box">
+          <div class="wa-box-header">
+            <span>💬 WhatsApp Auto Report — Preview</span>
+          </div>
+          <div class="wa-box-body">*REPORT BACKBONE PROBLEM | Senin, 4 Mei 2026*
+===================================
+1. HT191056  - HT191056 - MAJOR - GAMAS - BEBERAPA BACKBONE DAN OLT TAMBUN DOWN BERSAMAAN - DOWN - ( KAMIS, 30 APRIL 2026 ) (RNJ89335)
+
+Problem		: DOWN
+Impact		:
+- KOMSEN &lt;&gt; MON-CORE-DCI 2x10G
+- TAMBUN &lt;&gt; RAWA-LELE 2x10G
+Status		: ON PROGRESS
+
+&gt; Team dalam perjalanan
+&gt; Team tiba di lokasi
+&gt; hasil pengecekan insikasi FO Cut di jarak 9Km dari closure
+&gt; Team dalam perjalanan pencarian titik putus
+
+===================================
+2. HT191017 - HT191017 - MAJOR - BACKBONE - MR &lt;&gt; OKING V DEPOK 200G Down - [Kamis, 30 April 2026]
+
+Problem		: DOWN
+Impact		:
+- MR &lt;&gt; OKING V DEPOK
+Status		: PENDING
+
+&gt; Dalam pernjadwalan team FO
+
+===================================
+3. HT190995 - HT190995 - MAJOR - BACKBONE - Beberapa Backbone Down bersamaan - Down [Rabu, 30 April 2026]
+
+Problem		: DOWN
+Impact		:
+- MON CORE CCC &lt;&gt; KOMSEN V XMALANG 20G
+- KOMSEN &lt;&gt; CCC V MUX XMALANG 200G
+- MR &lt;&gt; DCI V WSS 200G
+Status		: ON PROGRESS
+
+&gt; Team dalam perjalanan
+
+===================================</div>
+        </div>
+        <div class="callout info" style="margin-top:12px;">
+          <span class="callout-icon">💡</span>
+          <span>Format laporan WA menyesuaikan update terbaru yang diinput NOC. Pastikan update tiket selalu terkini agar laporan WA akurat.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION: EXPORT & REKAP
+    ══════════════════════════════════════ -->
+    <div class="section" id="sec-export">
+      <div class="section-eyebrow">Fitur Lanjutan</div>
+      <h2>Export Data & Rekap Insiden</h2>
+      <p class="section-desc">Unduh data tiket dan lihat statistik insiden untuk keperluan laporan.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="subsection">
+          <h3>📥 Export Data</h3>
+          <p>Export seluruh atau sebagian daftar tiket ke format <strong>CSV / Excel</strong> untuk keperluan:</p>
+          <ul>
+            <li>Laporan SLA bulanan ke manajemen</li>
+            <li>Analisis tren insiden backbone</li>
+            <li>Backup data tiket</li>
+            <li>Input ke sistem pelaporan eksternal</li>
+          </ul>
+          <div class="callout info" style="margin-top:12px;">
+            <span class="callout-icon">💡</span>
+            <span>Gunakan filter terlebih dahulu untuk mengexport data periode tertentu saja (misal: bulan April 2026).</span>
+          </div>
+        </div>
+        <div class="subsection">
+          <h3>📊 Rekap Insiden</h3>
+          <p>Ringkasan statistik yang ditampilkan secara otomatis, meliputi:</p>
+          <ul>
+            <li>Total tiket per periode</li>
+            <li>Distribusi per status (Open/Solved/Cancel)</li>
+            <li>Rata-rata durasi downtime</li>
+            <li>Segmen backbone dengan insiden terbanyak</li>
+            <li>Tren insiden bulanan / mingguan</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION: ALUR LENGKAP
+    ══════════════════════════════════════ -->
+    <div class="section" id="sec-flow">
+      <div class="section-eyebrow">Ringkasan</div>
+      <h2>Alur Lengkap Penanganan Insiden Backbone</h2>
+      <p class="section-desc">Dari deteksi gangguan hingga tiket closed — seluruh alur terintegrasi.</p>
+
+      <table class="field-table">
+        <thead>
+          <tr><th>#</th><th>Tahap</th><th>Aksi di Sistem</th><th>PIC</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><strong>Deteksi Gangguan</strong></td>
+            <td>Gangguan terdeteksi via Zabbix/MRTG/laporan client</td>
+            <td>NOC Shift</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><strong>Buat Tiket Odoo</strong></td>
+            <td>Klik "Buat Tiket Odoo" di form Open New Ticket</td>
+            <td>NOC Shift</td>
+            <td><span class="badge badge-pending">PENDING</span></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><strong>Eskalasi di Odoo</strong></td>
+            <td>Buka Odoo → eskalasi tiket → uncheck Is RFO</td>
+            <td>NOC Shift</td>
+            <td><span class="badge badge-pending">PENDING</span></td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><strong>Isi Form Web</strong></td>
+            <td>Lengkapi semua field termasuk kode backbone</td>
+            <td>NOC Shift</td>
+            <td><span class="badge badge-pending">PENDING</span></td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><strong>Penanganan Aktif</strong></td>
+            <td>Update tiket ke On Progress + isi action yang dilakukan</td>
+            <td>Tim Teknis / NOC</td>
+            <td><span class="badge badge-progress">ON PROGRESS</span></td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><strong>Update Berkala</strong></td>
+            <td>Update tiket setiap 30 menit selama penanganan</td>
+            <td>NOC Shift</td>
+            <td><span class="badge badge-progress">ON PROGRESS</span></td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><strong>Verifikasi Normal</strong></td>
+            <td>Cek link UP, ping normal, konfirmasi ke client</td>
+            <td>NOC Shift</td>
+            <td><span class="badge badge-progress">ON PROGRESS</span></td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><strong>Close Tiket</strong></td>
+            <td>Update status Solved → isi form close lengkap → simpan</td>
+            <td>NOC Shift / Leader</td>
+            <td><span class="badge badge-solved">SOLVED</span></td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><strong>Summary & Laporan</strong></td>
+            <td>Copy summary otomatis → kirim ke grup WA. Tiket hilang dari WA Report.</td>
+            <td>NOC Shift</td>
+            <td><span class="badge badge-solved">SOLVED</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning" style="margin-top:20px;">
+        <span class="callout-icon">⏱️</span>
+        <span><strong>Ingat:</strong> Waktu Start Time yang tercatat saat Open Tiket dan End Time saat Close Tiket digunakan untuk menghitung <strong>durasi downtime</strong> pada laporan SLA bulanan. Pastikan keduanya akurat.</span>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="background:#0f172a;padding:32px 72px;text-align:center;">
+      <p style="font-size:12px;color:#475569;">Fibermedia Utility — Report Backbone NOC · Dokumen Internal · 2026</p>
+      <p style="font-size:11px;color:#334155;margin-top:4px;">Untuk pertanyaan dan pengembangan fitur, hubungi tim Developer NOC.</p>
+    </div>
+
+  </div><!-- /.main -->
+</div><!-- /.layout -->
+</body>
+</html>

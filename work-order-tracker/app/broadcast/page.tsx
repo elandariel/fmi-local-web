@@ -6,8 +6,9 @@ import {
   Megaphone, Send, Copy, RefreshCcw, Trash2,
   FileText, User, Zap, Info, ClipboardList,
   AlertTriangle, Eye, EyeOff, Pencil, Save,
-  X, RotateCcw, Clock, CheckCircle2
+  X, RotateCcw, Clock, CheckCircle2, Users, Globe
 } from 'lucide-react';
+import { ROLE_LABELS, ROLE_COLORS, type Role } from '@/lib/permissions';
 import { format, differenceInHours } from 'date-fns';
 import { id as indonesia } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -101,6 +102,17 @@ export default function BroadcastPage() {
   const [form, setForm] = useState({ type: 'INFO', title: '', message: '' });
   const [showPreview, setShowPreview] = useState(false);
 
+  // ── Role targeting ──
+  // empty array = Semua User (null in DB); selected = specific roles only
+  const [targetRoles, setTargetRoles] = useState<Role[]>([]);
+  const ALL_ROLES: Role[] = ['NOC', 'CS', 'AKTIVATOR', 'ADMIN', 'SUPER_DEV'];
+
+  const toggleRole = (role: Role) => {
+    setTargetRoles(prev =>
+      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+    );
+  };
+
   // ── Delete confirm modal ──
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 
@@ -186,9 +198,10 @@ export default function BroadcastPage() {
     setSending(true);
     const toastId = toast.loading('Mengirim broadcast...');
     const { error } = await supabase.from('Broadcasts').insert([{
-      type:    form.type,
-      message: `[${form.title}]\n\n${form.message}`,
-      sender:  senderName,   // BC-BUG-03: nama user login
+      type:        form.type,
+      message:     `[${form.title}]\n\n${form.message}`,
+      sender:      senderName,
+      target_roles: targetRoles.length > 0 ? targetRoles : null,
     }]);
     toast.dismiss(toastId);
     setSending(false);
@@ -197,8 +210,12 @@ export default function BroadcastPage() {
     } else {
       fetchHistory();
       setForm({ type: 'INFO', title: '', message: '' });
+      setTargetRoles([]);
       setShowPreview(false);
-      toast.success('Broadcast Terkirim!', { description: 'Pesan akan muncul di dashboard semua user.' });
+      const targetDesc = targetRoles.length > 0
+        ? `Hanya untuk: ${targetRoles.join(', ')}`
+        : 'Pesan akan muncul di dashboard semua user.';
+      toast.success('Broadcast Terkirim!', { description: targetDesc });
       await logActivity({
         activity: 'BROADCAST_SEND',
         subject: form.title,
@@ -236,9 +253,10 @@ export default function BroadcastPage() {
     setSending(true);
     const toastId = toast.loading('Re-push broadcast...');
     const { error } = await supabase.from('Broadcasts').insert([{
-      type:    item.type,
-      message: item.message,
-      sender:  senderName,
+      type:         item.type,
+      message:      item.message,
+      sender:       senderName,
+      target_roles: item.target_roles ?? null,
     }]);
     toast.dismiss(toastId);
     setSending(false);
@@ -585,10 +603,79 @@ export default function BroadcastPage() {
             )}
           </div>
 
+          {/* ── Target Roles — Tujuan Pesan ── */}
+          <div className="px-5 pb-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5">
+              <div className="flex items-center gap-2 mb-3">
+                <Users size={13} className="text-slate-400" />
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                  Tujuan Pesan
+                </span>
+                {targetRoles.length === 0 ? (
+                  <span className="ml-auto flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    <Globe size={9} /> Semua User
+                  </span>
+                ) : (
+                  <span className="ml-auto text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                    {targetRoles.length} role dipilih
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {/* "Semua User" chip */}
+                <button
+                  type="button"
+                  onClick={() => setTargetRoles([])}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${
+                    targetRoles.length === 0
+                      ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
+                      : 'bg-white text-slate-500 border-slate-200 hover:border-emerald-300 hover:text-emerald-600'
+                  }`}
+                >
+                  <Globe size={10} /> Semua User
+                </button>
+
+                {/* Role chips */}
+                {ALL_ROLES.map(role => {
+                  const selected = targetRoles.includes(role);
+                  const colors = ROLE_COLORS[role];
+                  return (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => toggleRole(role)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all"
+                      style={selected ? {
+                        background: colors.bg,
+                        color: colors.text,
+                        borderColor: colors.border,
+                        boxShadow: `0 0 0 2px ${colors.border}`,
+                      } : {
+                        background: '#fff',
+                        color: '#94a3b8',
+                        borderColor: '#e2e8f0',
+                      }}
+                    >
+                      {selected && <span style={{ color: colors.text }}>✓</span>}
+                      {ROLE_LABELS[role]}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {targetRoles.length > 0 && (
+                <p className="text-[10px] text-slate-400 mt-2.5">
+                  Hanya user dengan role <span className="font-semibold text-slate-500">{targetRoles.map(r => ROLE_LABELS[r]).join(', ')}</span> yang akan menerima notifikasi ini.
+                </p>
+              )}
+            </div>
+          </div>
+
           {/* Footer actions */}
           <div className="px-5 py-3.5 border-t border-slate-100 flex items-center gap-2 bg-slate-50/50">
             <button
-              onClick={() => { setForm({ type: 'INFO', title: '', message: '' }); setShowPreview(false); }}
+              onClick={() => { setForm({ type: 'INFO', title: '', message: '' }); setTargetRoles([]); setShowPreview(false); }}
               className="px-3.5 py-2 text-slate-500 hover:bg-slate-100 rounded-lg text-xs font-semibold transition-colors"
             >
               Reset
@@ -674,6 +761,16 @@ export default function BroadcastPage() {
                       <span className="text-[10px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded-full flex items-center gap-1">
                         <User size={9} /> {item.sender}
                       </span>
+                      {/* Target roles badge */}
+                      {item.target_roles && Array.isArray(item.target_roles) && item.target_roles.length > 0 ? (
+                        <span className="text-[9px] font-bold bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                          <Users size={8} /> {item.target_roles.join(', ')}
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                          <Globe size={8} /> Semua
+                        </span>
+                      )}
                       {/* BC-BUG-04: active / expired status */}
                       {expired ? (
                         <span className="text-[9px] font-bold bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full">

@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fibermedia Utility — Manual Pengguna</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f4f6fa;
+      color: #1e293b;
+      line-height: 1.6;
+    }
+
+    /* ── Page wrapper (A4-ish, centered) ── */
+    .page {
+      width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+    }
+
+    /* ── COVER PAGE ── */
+    .cover {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 55%, #0f172a 100%);
+      color: #fff;
+      padding: 60px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cover::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 70% 30%, rgba(59,130,246,0.18) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .cover-logo {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.08);
+      padding: 12px;
+      margin-bottom: 28px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .cover-logo-placeholder {
+      width: 100px; height: 100px;
+      border-radius: 20px;
+      background: rgba(59,130,246,0.25);
+      border: 1px solid rgba(59,130,246,0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; margin-bottom: 28px; font-weight: 900; color: #93c5fd;
+      letter-spacing: -2px;
+    }
+    .cover-badge {
+      display: inline-block;
+      background: rgba(59,130,246,0.2);
+      border: 1px solid rgba(59,130,246,0.4);
+      color: #93c5fd;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 99px;
+      margin-bottom: 20px;
+    }
+    .cover h1 {
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      color: #fff;
+      margin-bottom: 12px;
+      line-height: 1.15;
+    }
+    .cover h1 span { color: #60a5fa; }
+    .cover .subtitle {
+      font-size: 16px;
+      color: #94a3b8;
+      margin-bottom: 48px;
+      max-width: 440px;
+    }
+    .cover-divider {
+      width: 60px; height: 3px;
+      background: linear-gradient(to right, #3b82f6, #60a5fa);
+      border-radius: 2px;
+      margin: 0 auto 48px;
+    }
+    .cover-meta {
+      display: flex; gap: 32px; margin-top: 12px;
+    }
+    .cover-meta-item {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .cover-meta-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #64748b;
+    }
+    .cover-meta-value {
+      font-size: 13px; font-weight: 600; color: #cbd5e1;
+    }
+    .cover-footer {
+      position: absolute; bottom: 32px; left: 0; right: 0;
+      text-align: center; font-size: 11px; color: #475569;
+    }
+
+    /* ── TABLE OF CONTENTS ── */
+    .toc-page {
+      padding: 64px 72px;
+      min-height: 50vh;
+    }
+    .section-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #3b82f6;
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap-8px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+      margin-left: 12px;
+      display: inline-block;
+    }
+    .toc-title {
+      font-size: 28px;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 36px;
+    }
+    .toc-list { list-style: none; }
+    .toc-item {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 10px 0;
+      border-bottom: 1px dashed #e2e8f0;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
+    .toc-item:hover .toc-item-title { color: #3b82f6; }
+    .toc-num {
+      font-size: 11px;
+      font-weight: 800;
+      color: #3b82f6;
+      min-width: 32px;
+    }
+    .toc-item-icon {
+      font-size: 16px;
+      min-width: 28px;
+    }
+    .toc-item-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+      flex: 1;
+      transition: color 0.15s;
+    }
+    .toc-item-page {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    .toc-group {
+      margin-top: 24px;
+    }
+    .toc-group-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 4px;
+      padding-left: 32px;
+    }
+
+    /* ── CHAPTER / SECTION PAGE ── */
+    .chapter-page {
+      padding: 64px 72px;
+    }
+    .chapter-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 40px;
+      padding-bottom: 28px;
+      border-bottom: 2px solid #f1f5f9;
+    }
+    .chapter-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(59,130,246,0.25);
+    }
+    .chapter-heading { flex: 1; }
+    .chapter-num {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #3b82f6;
+      margin-bottom: 4px;
+    }
+    .chapter-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+    .chapter-desc {
+      font-size: 14px;
+      color: #64748b;
+      margin-top: 6px;
+    }
+
+    /* ── Content blocks ── */
+    .content-section { margin-bottom: 36px; }
+    .content-section h3 {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .content-section h3::before {
+      content: '';
+      width: 4px; height: 16px;
+      background: #3b82f6;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .content-section p {
+      font-size: 14px;
+      color: #475569;
+      line-height: 1.7;
+      margin-bottom: 10px;
+    }
+    .content-section ul, .content-section ol {
+      padding-left: 20px;
+      margin-bottom: 10px;
+    }
+    .content-section li {
+      font-size: 14px;
+      color: #475569;
+      line-height: 1.7;
+      margin-bottom: 4px;
+    }
+    .content-section li strong { color: #1e293b; }
+
+    /* ── Screenshot block ── */
+    .screenshot-block {
+      margin: 24px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    }
+    .screenshot-block img {
+      width: 100%;
+      display: block;
+    }
+    .screenshot-caption {
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #64748b;
+      font-style: italic;
+    }
+    .screenshot-placeholder {
+      width: 100%; height: 260px;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+    .screenshot-placeholder .ph-icon { font-size: 36px; }
+
+    /* ── Callout / Note boxes ── */
+    .callout {
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 16px 0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+    .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .callout.info    { background: #eff6ff; border-left: 3px solid #3b82f6; color: #1d4ed8; }
+    .callout.warning { background: #fffbeb; border-left: 3px solid #f59e0b; color: #92400e; }
+    .callout.success { background: #f0fdf4; border-left: 3px solid #22c55e; color: #166534; }
+    .callout.danger  { background: #fef2f2; border-left: 3px solid #ef4444; color: #991b1b; }
+
+    /* ── Step list ── */
+    .step-list { list-style: none; padding: 0; margin: 16px 0; }
+    .step-list li {
+      display: flex; gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .step-num {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: #3b82f6;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-content { flex: 1; }
+    .step-content strong { font-size: 14px; color: #0f172a; display: block; margin-bottom: 2px; }
+    .step-content span { font-size: 13px; color: #64748b; }
+
+    /* ── Table ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+    .data-table th {
+      background: #0f172a;
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #475569;
+      vertical-align: top;
+    }
+    .data-table tr:nth-child(even) td { background: #f8fafc; }
+    .data-table tr:hover td { background: #eff6ff; }
+
+    /* ── Badge / Tag ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+    .badge-green  { background: #dcfce7; color: #166534; }
+    .badge-red    { background: #fee2e2; color: #991b1b; }
+    .badge-yellow { background: #fef9c3; color: #854d0e; }
+    .badge-gray   { background: #f1f5f9; color: #475569; }
+
+    /* ── Page divider ── */
+    .page-divider {
+      border: none;
+      border-top: 2px solid #f1f5f9;
+      margin: 48px 0;
+    }
+
+    /* ── Annotated screenshot ── */
+    .annotated-wrap {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+      background: #0f172a;
+    }
+    .annotated-wrap img {
+      width: 100%;
+      display: block;
+    }
+    /* Highlight box drawn over the image */
+    .ann-highlight {
+      position: absolute;
+      border: 2px solid;
+      border-radius: 8px;
+      pointer-events: none;
+    }
+    /* Number bubble */
+    .ann-bubble {
+      position: absolute;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      pointer-events: none;
+      border: 2px solid rgba(255,255,255,0.8);
+    }
+    /* Annotation legend below image */
+    .ann-legend {
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ann-legend-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .ann-legend-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .ann-legend-text { color: #475569; line-height: 1.5; }
+    .ann-legend-text strong { color: #0f172a; }
+
+    /* ── Print / PDF styles ── */
+    @media print {
+      body { background: #fff; }
+      .page { box-shadow: none; width: 100%; }
+      .cover { min-height: 100vh; page-break-after: always; }
+      .chapter-page, .toc-page { page-break-before: always; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ══════════════════════════════════════
+       COVER PAGE
+  ══════════════════════════════════════ -->
+  <div class="cover">
+    <img src="img/fmi-logo.png" alt="FMI Logo" class="cover-logo"
+         onerror="this.style.display='none'; document.getElementById('logo-placeholder').style.display='flex';" />
+    <div id="logo-placeholder" class="cover-logo-placeholder" style="display:none;">FM</div>
+
+    <div class="cover-badge">Panduan Pengguna</div>
+    <h1>Fibermedia<br/><span>Utility</span></h1>
+    <p class="subtitle">Panduan lengkap penggunaan sistem manajemen layanan jaringan PT Fibermedia Indonesia</p>
+    <div class="cover-divider"></div>
+
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Versi</span>
+        <span class="cover-meta-value">2025</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Bahasa</span>
+        <span class="cover-meta-value">Indonesia</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Tahun</span>
+        <span class="cover-meta-value">2025</span>
+      </div>
+    </div>
+
+    <div class="cover-footer">PT Fibermedia Indonesia · Fibermedia Utility · Dokumen Internal</div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TABLE OF CONTENTS
+  ══════════════════════════════════════ -->
+  <div class="toc-page">
+    <div class="section-label">Daftar Isi</div>
+    <div class="toc-title">Panduan Lengkap Fibermedia Utility</div>
+
+    <style>
+      .toc-sub { list-style:none; padding:0; margin:0 0 4px 52px; }
+      .toc-sub-item {
+        display:flex; align-items:center; gap:8px;
+        padding:5px 0; font-size:12.5px; color:#64748b;
+        border-bottom:1px dashed #f1f5f9;
+        text-decoration:none;
+      }
+      .toc-sub-item:hover { color:#3b82f6; }
+      .toc-sub-dot { width:5px;height:5px;border-radius:50%;background:#cbd5e1;flex-shrink:0; }
+      .toc-sub-title { flex:1; }
+      .toc-item { cursor:pointer; }
+    </style>
+
+    <ul class="toc-list">
+
+      <!-- ── GROUP 1 ── -->
+      <div class="toc-group">
+        <div class="toc-group-label">Memulai</div>
+
+        <a class="toc-item" href="#ch-login">
+          <span class="toc-num">01</span>
+          <span class="toc-item-icon">🔐</span>
+          <span class="toc-item-title">Login ke Sistem</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-login"><span class="toc-sub-dot"></span><span class="toc-sub-title">Cara login dengan email & password</span></a>
+          <a class="toc-sub-item" href="#ch-login"><span class="toc-sub-dot"></span><span class="toc-sub-title">Password default akun baru</span></a>
+          <a class="toc-sub-item" href="#ch-login"><span class="toc-sub-dot"></span><span class="toc-sub-title">Hak akses berdasarkan role</span></a>
+        </ul>
+
+        <a class="toc-item" href="#ch-dashboard">
+          <span class="toc-num">02</span>
+          <span class="toc-item-icon">🏠</span>
+          <span class="toc-item-title">Dashboard</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-dashboard"><span class="toc-sub-dot"></span><span class="toc-sub-title">Ringkasan statistik & kartu info</span></a>
+          <a class="toc-sub-item" href="#ch-dashboard"><span class="toc-sub-dot"></span><span class="toc-sub-title">Broadcast ticker notifikasi</span></a>
+          <a class="toc-sub-item" href="#ch-dashboard"><span class="toc-sub-dot"></span><span class="toc-sub-title">Navigasi sidebar</span></a>
+        </ul>
+      </div>
+
+      <!-- ── GROUP 2 ── -->
+      <div class="toc-group">
+        <div class="toc-group-label">Operasional NOC</div>
+
+        <a class="toc-item" href="#ch-workorder">
+          <span class="toc-num">03</span>
+          <span class="toc-item-icon">📋</span>
+          <span class="toc-item-title">Work Order</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-workorder"><span class="toc-sub-dot"></span><span class="toc-sub-title">Melihat & filter daftar work order</span></a>
+          <a class="toc-sub-item" href="#ch-workorder"><span class="toc-sub-dot"></span><span class="toc-sub-title">Membuat work order baru</span></a>
+          <a class="toc-sub-item" href="#ch-workorder"><span class="toc-sub-dot"></span><span class="toc-sub-title">Detail, update & tutup work order</span></a>
+          <a class="toc-sub-item" href="#ch-workorder"><span class="toc-sub-dot"></span><span class="toc-sub-title">Export & download laporan WO</span></a>
+        </ul>
+
+        <a class="toc-item" href="#ch-tracker">
+          <span class="toc-num">04</span>
+          <span class="toc-item-icon">📡</span>
+          <span class="toc-item-title">Tracker Gangguan</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-tracker"><span class="toc-sub-dot"></span><span class="toc-sub-title">Input gangguan baru</span></a>
+          <a class="toc-sub-item" href="#ch-tracker"><span class="toc-sub-dot"></span><span class="toc-sub-title">Update status & progress gangguan</span></a>
+          <a class="toc-sub-item" href="#ch-tracker"><span class="toc-sub-dot"></span><span class="toc-sub-title">Filter & pencarian gangguan</span></a>
+          <a class="toc-sub-item" href="#ch-tracker"><span class="toc-sub-dot"></span><span class="toc-sub-title">Export data tracker ke CSV</span></a>
+        </ul>
+
+        <a class="toc-item" href="#ch-noc">
+          <span class="toc-num">05</span>
+          <span class="toc-item-icon">📊</span>
+          <span class="toc-item-title">NOC & Laporan</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-noc"><span class="toc-sub-dot"></span><span class="toc-sub-title">Laporan harian & rekap gangguan</span></a>
+          <a class="toc-sub-item" href="#ch-noc"><span class="toc-sub-dot"></span><span class="toc-sub-title">Export laporan NOC</span></a>
+        </ul>
+      </div>
+
+      <!-- ── GROUP 3 ── -->
+      <div class="toc-group">
+        <div class="toc-group-label">Data Jaringan</div>
+
+        <a class="toc-item" href="#ch-vlan">
+          <span class="toc-num">06</span>
+          <span class="toc-item-icon">🔌</span>
+          <span class="toc-item-title">Manajemen VLAN</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-vlan"><span class="toc-sub-dot"></span><span class="toc-sub-title">Melihat daftar VLAN terdaftar</span></a>
+          <a class="toc-sub-item" href="#ch-vlan"><span class="toc-sub-dot"></span><span class="toc-sub-title">Tambah VLAN baru</span></a>
+          <a class="toc-sub-item" href="#ch-vlan"><span class="toc-sub-dot"></span><span class="toc-sub-title">Edit & hapus entri VLAN</span></a>
+          <a class="toc-sub-item" href="#ch-vlan"><span class="toc-sub-dot"></span><span class="toc-sub-title">Pencarian & filter VLAN</span></a>
+        </ul>
+
+        <a class="toc-item" href="#ch-clients">
+          <span class="toc-num">07</span>
+          <span class="toc-item-icon">🏢</span>
+          <span class="toc-item-title">Data Client Corporate</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-clients"><span class="toc-sub-dot"></span><span class="toc-sub-title">Daftar & pencarian client</span></a>
+          <a class="toc-sub-item" href="#ch-clients"><span class="toc-sub-dot"></span><span class="toc-sub-title">Input client baru & auto-fill field</span></a>
+          <a class="toc-sub-item" href="#ch-clients"><span class="toc-sub-dot"></span><span class="toc-sub-title">Detail client & tombol Data Teknis</span></a>
+          <a class="toc-sub-item" href="#ch-clients"><span class="toc-sub-dot"></span><span class="toc-sub-title">Edit data client</span></a>
+          <a class="toc-sub-item" href="#ch-clients"><span class="toc-sub-dot"></span><span class="toc-sub-title">Download report TXT registrasi</span></a>
+        </ul>
+
+        <a class="toc-item" href="#ch-interkoneksi">
+          <span class="toc-num">08</span>
+          <span class="toc-item-icon">🔗</span>
+          <span class="toc-item-title">Data Interkoneksi</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-interkoneksi"><span class="toc-sub-dot"></span><span class="toc-sub-title">Daftar & pencarian interkoneksi</span></a>
+          <a class="toc-sub-item" href="#ch-interkoneksi"><span class="toc-sub-dot"></span><span class="toc-sub-title">Input & edit data interkoneksi</span></a>
+          <a class="toc-sub-item" href="#ch-interkoneksi"><span class="toc-sub-dot"></span><span class="toc-sub-title">Detail drawer & catatan (Note)</span></a>
+          <a class="toc-sub-item" href="#ch-interkoneksi"><span class="toc-sub-dot"></span><span class="toc-sub-title">Export data ke CSV</span></a>
+        </ul>
+      </div>
+
+      <!-- ── GROUP 4 ── -->
+      <div class="toc-group">
+        <div class="toc-group-label">Komunikasi & Monitoring</div>
+
+        <a class="toc-item" href="#ch-broadcast">
+          <span class="toc-num">09</span>
+          <span class="toc-item-icon">📢</span>
+          <span class="toc-item-title">Broadcast & Pengumuman</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-broadcast"><span class="toc-sub-dot"></span><span class="toc-sub-title">Ticker broadcast di header</span></a>
+          <a class="toc-sub-item" href="#ch-broadcast"><span class="toc-sub-dot"></span><span class="toc-sub-title">Kirim broadcast baru (URGENT / INFO / ASSIGNMENT)</span></a>
+          <a class="toc-sub-item" href="#ch-broadcast"><span class="toc-sub-dot"></span><span class="toc-sub-title">Popup notifikasi otomatis</span></a>
+        </ul>
+
+        <a class="toc-item" href="#ch-logs">
+          <span class="toc-num">10</span>
+          <span class="toc-item-icon">📜</span>
+          <span class="toc-item-title">Log Aktivitas</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-logs"><span class="toc-sub-dot"></span><span class="toc-sub-title">Melihat riwayat aktivitas seluruh user</span></a>
+          <a class="toc-sub-item" href="#ch-logs"><span class="toc-sub-dot"></span><span class="toc-sub-title">Filter log berdasarkan tanggal & aksi</span></a>
+        </ul>
+
+        <a class="toc-item" href="#ch-tools">
+          <span class="toc-num">11</span>
+          <span class="toc-item-icon">🛠️</span>
+          <span class="toc-item-title">Tools</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-tools"><span class="toc-sub-dot"></span><span class="toc-sub-title">Fitur-fitur utilitas jaringan</span></a>
+        </ul>
+      </div>
+
+      <!-- ── GROUP 5 ── -->
+      <div class="toc-group">
+        <div class="toc-group-label">Administrasi Sistem (Admin Only)</div>
+
+        <a class="toc-item" href="#ch-users">
+          <span class="toc-num">12</span>
+          <span class="toc-item-icon">👥</span>
+          <span class="toc-item-title">Manajemen Pengguna</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-users"><span class="toc-sub-dot"></span><span class="toc-sub-title">Daftar pengguna aktif</span></a>
+          <a class="toc-sub-item" href="#ch-users"><span class="toc-sub-dot"></span><span class="toc-sub-title">Undang & tambah pengguna baru</span></a>
+          <a class="toc-sub-item" href="#ch-users"><span class="toc-sub-dot"></span><span class="toc-sub-title">Ubah role & nonaktifkan akun</span></a>
+        </ul>
+
+        <a class="toc-item" href="#ch-roles">
+          <span class="toc-num">13</span>
+          <span class="toc-item-icon">🛡️</span>
+          <span class="toc-item-title">Manajemen Role & Hak Akses</span>
+        </a>
+        <ul class="toc-sub">
+          <a class="toc-sub-item" href="#ch-roles"><span class="toc-sub-dot"></span><span class="toc-sub-title">Daftar role yang tersedia</span></a>
+          <a class="toc-sub-item" href="#ch-roles"><span class="toc-sub-dot"></span><span class="toc-sub-title">Buat & konfigurasi role baru</span></a>
+          <a class="toc-sub-item" href="#ch-roles"><span class="toc-sub-dot"></span><span class="toc-sub-title">Pembatasan akses per fitur</span></a>
+        </ul>
+      </div>
+
+    </ul>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       CHAPTER 1 — LOGIN
+  ══════════════════════════════════════ -->
+  <div class="chapter-page" id="ch-login">
+    <div class="chapter-header">
+      <div class="chapter-icon">🔐</div>
+      <div class="chapter-heading">
+        <div class="chapter-num">Bab 01</div>
+        <div class="chapter-title">Login ke Sistem</div>
+        <div class="chapter-desc">Cara masuk ke Fibermedia Utility menggunakan akun NOC yang telah terdaftar.</div>
+      </div>
+    </div>
+
+    <!-- Overview -->
+    <div class="content-section">
+      <h3>Pengenalan</h3>
+      <p>
+        Fibermedia Utility menggunakan sistem autentikasi berbasis email. Setiap pengguna diberikan akun
+        oleh Administrator dengan hak akses sesuai role yang ditetapkan (Admin, NOC, Viewer, dll).
+        Halaman login hanya bisa diakses melalui browser di URL:
+      </p>
+      <div class="callout info">
+        <span class="callout-icon">🌐</span>
+        <span><strong>URL Sistem:</strong> <code style="font-family:monospace;font-weight:700;">https://app.fmi-tracker.my.id/</code></span>
+      </div>
+    </div>
+
+    <!-- Annotated screenshot -->
+    <div class="content-section">
+      <h3>Tampilan Halaman Login</h3>
+
+      <div class="screenshot-block">
+        <img src="img/01-login.png" alt="Halaman Login Fibermedia Utility"
+             style="width:100%;display:block;"
+             onerror="this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><div class=\'ph-icon\'>🖼️</div><span>Simpan screenshot ke: img/01-login.png</span></div>'" />
+        <div class="screenshot-caption">Gambar 1.1 — Halaman login Fibermedia Utility dengan anotasi panduan pengisian.</div>
+      </div>
+    </div>
+
+    <!-- Step by step -->
+    <div class="content-section">
+      <h3>Langkah-langkah Login</h3>
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Buka browser dan akses URL sistem</strong>
+            <span>Ketik <code style="font-family:monospace;">https://app.fmi-tracker.my.id/</code> di address bar, lalu tekan Enter.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Masukkan Email Address</strong>
+            <span>Klik kolom <em>Email Address</em> dan ketik email yang telah didaftarkan oleh Administrator (biasanya format <code style="font-family:monospace;">nama@fibermedia.co.id</code>).</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Masukkan Password</strong>
+            <span>Klik kolom <em>Password</em> dan ketik password akun. Untuk akun baru, gunakan password default: <strong style="color:#854d0e;background:#fef9c3;padding:1px 8px;border-radius:4px;font-family:monospace;">Mail@2026</strong></span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <strong>Klik tombol SIGN IN</strong>
+            <span>Sistem akan memverifikasi kredensial dan mengarahkan ke halaman Dashboard jika berhasil.</span>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <!-- Notes -->
+    <div class="content-section">
+      <h3>Catatan Penting</h3>
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <span><strong>Ganti password segera</strong> setelah login pertama kali. Jangan bagikan password default ke pihak lain.</span>
+      </div>
+      <div class="callout info">
+        <span class="callout-icon">🔑</span>
+        <span>Jika lupa password, klik link <strong>"Lupa password?"</strong> di halaman login untuk proses reset via email.</span>
+      </div>
+      <div class="callout danger">
+        <span class="callout-icon">🚫</span>
+        <span>Jangan login menggunakan akun milik orang lain. Setiap aktivitas di sistem tercatat berdasarkan akun yang digunakan.</span>
+      </div>
+    </div>
+
+    <!-- Role table -->
+    <div class="content-section">
+      <h3>Hak Akses Berdasarkan Role</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Deskripsi</th>
+            <th>Akses Utama</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-red">Admin</span></td>
+            <td>Administrator sistem</td>
+            <td>Full akses — termasuk manajemen user & role</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-blue">NOC</span></td>
+            <td>Network Operation Center</td>
+            <td>Work Order, Tracker, Data Client, Interkoneksi, VLAN</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">Viewer</span></td>
+            <td>Pengguna hanya baca</td>
+            <td>Melihat data tanpa bisa mengubah</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /.chapter-page -->
+
+  <!-- ══════════════════════════════════════
+       CHAPTER 2 — DASHBOARD
+  ══════════════════════════════════════ -->
+  <div class="chapter-page" id="ch-dashboard">
+    <div class="chapter-header">
+      <div class="chapter-icon">🏠</div>
+      <div class="chapter-heading">
+        <div class="chapter-num">Bab 02</div>
+        <div class="chapter-title">Dashboard</div>
+        <div class="chapter-desc">Halaman utama setelah login — ringkasan sistem, navigasi, dan monitoring real-time.</div>
+      </div>
+    </div>
+
+    <!-- Screenshot annotated -->
+    <div class="content-section">
+      <h3>Tampilan Dashboard</h3>
+      <div class="screenshot-block">
+        <img src="img/02-dashboard.png" alt="Dashboard Fibermedia Utility" style="width:100%;display:block;" />
+        <div class="screenshot-caption">Gambar 2.1 — Tampilan halaman Dashboard dengan anotasi area utama.</div>
+      </div>
+    </div>
+
+    <!-- Legend table -->
+    <div class="content-section">
+      <h3>Keterangan Area</h3>
+      <table class="data-table">
+        <thead>
+          <tr><th style="width:42px;">No.</th><th>Area / Fitur</th><th>Fungsi</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-blue">1</span></td>
+            <td><strong>Sidebar Navigasi</strong></td>
+            <td>Menu utama sistem. Terbagi menjadi 4 grup: <em>Reporting, Database, Log &amp; Tools,</em> dan <em>Access</em>. Klik <strong>Collapse</strong> di bawah untuk menyembunyikan sidebar.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">2</span></td>
+            <td><strong>Global Search</strong></td>
+            <td>Pencarian cepat di seluruh data sistem — client, WO, VLAN, tracker. Tekan <kbd style="background:#f1f5f9;padding:1px 6px;border-radius:4px;font-family:monospace;font-size:12px;">Ctrl+K</kbd> untuk fokus langsung ke search bar.</td>
+          </tr>
+          <tr>
+            <td><span class="badge" style="background:#fed7aa;color:#9a3412;">3</span></td>
+            <td><strong>Import / Export</strong></td>
+            <td>Tombol untuk <strong>Import</strong> data massal ke sistem (format CSV/Excel) dan <strong>Export</strong> seluruh data untuk keperluan backup atau analisis eksternal.</td>
+          </tr>
+          <tr>
+            <td><span class="badge" style="background:#e9d5ff;color:#6b21a8;">4</span></td>
+            <td><strong>Toggle Tema, Notifikasi &amp; Jam</strong></td>
+            <td>
+              <ul style="margin:4px 0;padding-left:16px;">
+                <li>☀️ / 🌙 <strong>Toggle Tema</strong> — Ganti tampilan antara mode terang dan gelap.</li>
+                <li>🔔 <strong>Lonceng Notifikasi</strong> — Menampilkan alert Work Order yang data-nya belum lengkap (WO Missing). Badge merah menunjukkan jumlah WO bermasalah.</li>
+                <li>🕐 <strong>Jam &amp; Tanggal</strong> — Penunjuk waktu real-time sistem.</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge" style="background:#99f6e4;color:#134e4a;">5</span></td>
+            <td><strong>Status System</strong></td>
+            <td>Indikator status real-time sistem: <strong>Tanggal</strong> hari ini, badge <span class="badge badge-green">LIVE</span> (sistem aktif), dan badge <span class="badge badge-green">ODOO OK</span> (koneksi ke Odoo ERP normal).</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-red">6</span></td>
+            <td><strong>Alert Banner WO Pending</strong></td>
+            <td>Banner peringatan otomatis yang muncul bila ada Work Order berstatus <span class="badge badge-yellow">PENDING</span> atau <span class="badge badge-blue">PROGRESS</span>. Menampilkan nomor WO, nama client, dan jumlah total WO aktif. Klik <strong>Lihat Semua</strong> untuk melihat daftar lengkap.</td>
+          </tr>
+          <tr>
+            <td><span class="badge" style="background:#99f6e4;color:#134e4a;">7</span></td>
+            <td><strong>Sync Sheet &amp; Buat WO Baru</strong></td>
+            <td>
+              <ul style="margin:4px 0;padding-left:16px;">
+                <li>📄 <strong>Sync Sheet</strong> — Sinkronisasi data Work Order dengan <em>Report Aktivator</em> di Google Spreadsheet secara otomatis.</li>
+                <li>📁 <strong>Archive</strong> — Akses arsip WO yang sudah ditutup.</li>
+                <li>➕ <strong>Buat WO Baru</strong> — Shortcut cepat membuat Work Order baru langsung dari Dashboard.</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-yellow">8</span></td>
+            <td><strong>Kartu Ringkasan (Summary Cards)</strong></td>
+            <td>Lima kartu statistik real-time sistem. Lihat detail di tabel bawah.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">9</span></td>
+            <td><strong>WO Status Breakdown</strong></td>
+            <td>Ringkasan total Work Order berdasarkan status: <span class="badge badge-green">SOLVED</span> (selesai) dan <span class="badge badge-red">CANCEL</span> (dibatalkan). Data dihitung sejak sistem pertama kali digunakan.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-blue">10</span></td>
+            <td><strong>Grafik Pertumbuhan Pelanggan</strong></td>
+            <td>Grafik batang bulanan yang menampilkan jumlah pelanggan baru dan total kapasitas jaringan. Toggle antara tampilan <strong>Pelanggan</strong> dan <strong>Kapasitas</strong> menggunakan tombol di kanan atas grafik.</td>
+          </tr>
+          <tr>
+            <td><span class="badge" style="background:#fce7f3;color:#9d174d;">11</span></td>
+            <td><strong>Jadwal Tim Aktivator</strong></td>
+            <td>Menampilkan jadwal shift tim aktivasi hari ini. Terbagi menjadi shift <strong>Pagi (08.00–16.00)</strong> dan <strong>Siang (14.00–22.00)</strong> beserta nama petugas yang bertugas.</td>
+          </tr>
+          <tr>
+            <td><span class="badge" style="background:#fed7aa;color:#9a3412;">12</span></td>
+            <td><strong>Aktivitas Terkini</strong></td>
+            <td>Feed real-time aktivitas seluruh user — pembuatan WO, update status, input data client, dll. Badge <span class="badge badge-green">LIVE</span> menandakan data diperbarui secara langsung tanpa perlu refresh halaman.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summary cards detail -->
+    <div class="content-section">
+      <h3>Detail Kartu Ringkasan <span class="badge badge-yellow">7</span></h3>
+      <table class="data-table">
+        <thead>
+          <tr><th>Kartu</th><th>Data yang Ditampilkan</th><th>Keterangan</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>👤 Total Client</strong></td>
+            <td>Jumlah client aktif di database</td>
+            <td>Total seluruh client corporate yang terdaftar di sistem</td>
+          </tr>
+          <tr>
+            <td><strong>⚡ WO Aktif</strong></td>
+            <td>Work Order berstatus Pending &amp; Progress</td>
+            <td>WO yang sedang berjalan dan belum ditutup</td>
+          </tr>
+          <tr>
+            <td><strong>📈 Bulan Ini</strong></td>
+            <td>Pelanggan baru bulan berjalan</td>
+            <td>Perbandingan vs bulan sebelumnya ditampilkan sebagai persentase</td>
+          </tr>
+          <tr>
+            <td><strong>🗄️ VLAN Tersedia</strong></td>
+            <td>Slot VLAN yang masih kosong</td>
+            <td>Bar merah menunjukkan persentase slot yang sudah terpakai</td>
+          </tr>
+          <tr>
+            <td><strong>🔌 Insiden Backbone</strong></td>
+            <td>Tiket gangguan backbone aktif</td>
+            <td>Jumlah insiden jaringan backbone yang belum terselesaikan</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sidebar detail -->
+    <div class="content-section">
+      <h3>Struktur Sidebar Navigasi <span class="badge badge-blue">1</span></h3>
+      <table class="data-table">
+        <thead>
+          <tr><th>Grup</th><th>Menu</th><th>Fungsi</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td rowspan="3"><strong>REPORTING</strong></td>
+            <td>Dashboard</td><td>Halaman utama &amp; ringkasan sistem</td>
+          </tr>
+          <tr><td>Monthly Report Aktivator</td><td>Laporan bulanan tim aktivasi</td></tr>
+          <tr><td>Backbone Report NOC</td><td>Laporan insiden jaringan backbone</td></tr>
+          <tr>
+            <td rowspan="3"><strong>DATABASE</strong></td>
+            <td>VLAN Database</td><td>Manajemen data VLAN</td>
+          </tr>
+          <tr><td>Data Client</td><td>Database client corporate</td></tr>
+          <tr><td>Data Interkoneksi</td><td>Database koneksi interkoneksi</td></tr>
+          <tr>
+            <td rowspan="2"><strong>LOG &amp; TOOLS</strong></td>
+            <td>Activity Log</td><td>Riwayat aktivitas seluruh pengguna</td>
+          </tr>
+          <tr><td>Tools &amp; Utilities</td><td>Alat bantu operasional jaringan</td></tr>
+          <tr>
+            <td rowspan="3"><strong>ACCESS</strong></td>
+            <td>Broadcast Message</td><td>Kirim pengumuman ke seluruh user</td>
+          </tr>
+          <tr><td>Team Management</td><td>Kelola akun pengguna</td></tr>
+          <tr><td>Role Management</td><td>Kelola hak akses per role</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <span>Dashboard diperbarui secara otomatis setiap beberapa menit. Lihat teks <em>"Update terakhir: X menit yang lalu"</em> di bawah sapaan untuk mengetahui waktu pembaruan terakhir.</span>
+    </div>
+
+  </div><!-- /.chapter-page -->
+
+  <!-- ══════════════════════════════════════
+       CHAPTER — BACKBONE REPORT NOC
+  ══════════════════════════════════════ -->
+  <div class="chapter-page" id="ch-backbone">
+    <div class="chapter-header">
+      <div class="chapter-icon">🔌</div>
+      <div class="chapter-heading">
+        <div class="chapter-num">Bab 03</div>
+        <div class="chapter-title">Report Backbone NOC</div>
+        <div class="chapter-desc">Modul pencatatan, monitoring, dan penanganan insiden gangguan jaringan backbone.</div>
+      </div>
+    </div>
+
+    <!-- ── PENGENALAN ── -->
+    <div class="content-section">
+      <h3>Pengenalan</h3>
+      <p>
+        <strong>Report Backbone NOC</strong> adalah modul yang digunakan untuk mencatat dan mengelola
+        setiap insiden gangguan pada jaringan backbone Fibermedia. Setiap gangguan dicatat sebagai
+        <strong>tiket</strong> yang memiliki siklus hidup dari status <em>Open</em> hingga <em>Closed</em>.
+      </p>
+      <div class="callout info">
+        <span class="callout-icon">ℹ️</span>
+        <span>Modul ini dapat diakses melalui sidebar menu <strong>Backbone Report NOC</strong> di bawah grup <em>Reporting</em>.</span>
+      </div>
+    </div>
+
+    <!-- ── FITUR UTAMA ── -->
+    <div class="content-section">
+      <h3>Fitur Utama</h3>
+      <table class="data-table">
+        <thead>
+          <tr><th>Fitur</th><th>Fungsi</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>📋 Daftar Tiket</strong></td>
+            <td>Menampilkan seluruh tiket insiden backbone yang pernah dibuat, lengkap dengan status, tanggal, dan informasi link yang terdampak.</td>
+          </tr>
+          <tr>
+            <td><strong>➕ Buat Tiket Baru</strong></td>
+            <td>Form untuk mencatat insiden gangguan baru pada jaringan backbone, termasuk informasi lokasi, jenis gangguan, dan dampak layanan.</td>
+          </tr>
+          <tr>
+            <td><strong>🔍 Filter & Pencarian</strong></td>
+            <td>Filter tiket berdasarkan status (Open/Closed), tanggal kejadian, atau kata kunci nama link/lokasi.</td>
+          </tr>
+          <tr>
+            <td><strong>📝 Update Tiket</strong></td>
+            <td>Menambahkan catatan progres penanganan, mengubah status, dan mencatat waktu penyelesaian gangguan.</td>
+          </tr>
+          <tr>
+            <td><strong>✅ Tutup Tiket</strong></td>
+            <td>Menutup tiket setelah gangguan selesai ditangani dan jaringan kembali normal, disertai catatan resolusi.</td>
+          </tr>
+          <tr>
+            <td><strong>📊 Rekap Insiden</strong></td>
+            <td>Ringkasan statistik insiden — total tiket, rata-rata durasi gangguan, dan link yang paling sering terdampak.</td>
+          </tr>
+          <tr>
+            <td><strong>📥 Export Data</strong></td>
+            <td>Export daftar tiket ke format CSV/Excel untuk keperluan laporan bulanan atau analisis SLA.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── STATUS TIKET ── -->
+    <div class="content-section">
+      <h3>Status Tiket</h3>
+      <table class="data-table">
+        <thead>
+          <tr><th>Status</th><th>Arti</th><th>Aksi Selanjutnya</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-red">OPEN</span></td>
+            <td>Insiden sedang aktif / gangguan belum teratasi</td>
+            <td>Update progres penanganan secara berkala</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-yellow">ON PROGRESS</span></td>
+            <td>Tim sedang menangani gangguan di lapangan atau remote</td>
+            <td>Catat setiap perkembangan penanganan</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">CLOSED</span></td>
+            <td>Gangguan sudah selesai ditangani, jaringan normal</td>
+            <td>Tiket diarsipkan, tidak bisa diedit kembali</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- DIVIDER -->
+    <hr class="page-divider"/>
+
+    <!-- ── PANDUAN: OPEN TIKET ── -->
+    <div class="content-section">
+      <h3>📌 Cara Membuka Tiket Baru (Open Tiket)</h3>
+      <p>Lakukan langkah berikut setiap kali terjadi insiden gangguan backbone yang perlu ditangani:</p>
+
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Buka halaman Report Backbone NOC</strong>
+            <span>Klik menu <strong>Backbone Report NOC</strong> di sidebar kiri, di bawah grup <em>Reporting</em>.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Klik tombol "+ Buat Tiket" / "Open Insiden"</strong>
+            <span>Tombol ini biasanya berada di pojok kanan atas halaman. Klik untuk membuka form input tiket baru.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Isi informasi gangguan</strong>
+            <span>Lengkapi semua field yang diperlukan pada form:</span>
+          </div>
+        </li>
+      </ol>
+
+      <table class="data-table" style="margin-top:0;">
+        <thead>
+          <tr><th>Field</th><th>Keterangan</th><th>Contoh</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Nama Link / Rute</strong></td>
+            <td>Nama segmen backbone yang mengalami gangguan</td>
+            <td>SBP-COMET / SBP-STAR</td>
+          </tr>
+          <tr>
+            <td><strong>Lokasi Gangguan</strong></td>
+            <td>Titik lokasi fisik atau node yang terdampak</td>
+            <td>POP Sudirman Lt.3</td>
+          </tr>
+          <tr>
+            <td><strong>Jenis Gangguan</strong></td>
+            <td>Kategori insiden yang terjadi</td>
+            <td>Link Down, Power Failure, Fiber Cut, dst.</td>
+          </tr>
+          <tr>
+            <td><strong>Tanggal & Jam Mulai</strong></td>
+            <td>Waktu pertama kali gangguan terdeteksi</td>
+            <td>04 Mei 2026, 10:30</td>
+          </tr>
+          <tr>
+            <td><strong>Dampak Layanan</strong></td>
+            <td>Deskripsi layanan atau client yang terdampak</td>
+            <td>10 client enterprise, 3 link interkoneksi</td>
+          </tr>
+          <tr>
+            <td><strong>Petugas Pelapor</strong></td>
+            <td>Nama NOC yang pertama kali mendeteksi & melaporkan</td>
+            <td>Ocha / Shidiq</td>
+          </tr>
+          <tr>
+            <td><strong>Deskripsi Awal</strong></td>
+            <td>Catatan singkat kondisi awal gangguan</td>
+            <td>"Link down terdeteksi via Zabbix pukul 10:28, ping loss 100%"</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <ol class="step-list" style="margin-top:16px;">
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <strong>Klik "Simpan" / "Open Tiket"</strong>
+            <span>Setelah semua field terisi, klik tombol simpan. Tiket akan muncul di daftar dengan status <span class="badge badge-red">OPEN</span> dan nomor tiket otomatis diberikan oleh sistem.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <strong>Informasikan ke Tim Terkait</strong>
+            <span>Gunakan fitur <strong>Broadcast Message</strong> untuk menginformasikan insiden ke seluruh anggota NOC yang sedang bertugas.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <span><strong>Penting:</strong> Buka tiket sesegera mungkin setelah gangguan terdeteksi. Waktu buka tiket akan digunakan untuk menghitung durasi gangguan (downtime) pada laporan SLA bulanan.</span>
+      </div>
+    </div>
+
+    <hr class="page-divider"/>
+
+    <!-- ── PANDUAN: UPDATE TIKET ── -->
+    <div class="content-section">
+      <h3>📝 Cara Update Progres Tiket</h3>
+      <p>Selama gangguan berlangsung, tim NOC wajib mencatat setiap perkembangan penanganan secara berkala:</p>
+
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Cari tiket yang akan diupdate</strong>
+            <span>Di halaman daftar tiket, cari tiket dengan status <span class="badge badge-red">OPEN</span> atau <span class="badge badge-yellow">ON PROGRESS</span>. Gunakan kolom pencarian jika daftar tiket panjang.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Klik tiket untuk membuka detail</strong>
+            <span>Klik baris tiket atau tombol <strong>Detail / Lihat</strong> untuk membuka halaman detail tiket.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Klik tombol "Update" atau "Tambah Catatan"</strong>
+            <span>Pada halaman detail tiket, terdapat tombol untuk menambahkan catatan progres penanganan.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <strong>Isi catatan update</strong>
+            <span>Masukkan informasi perkembangan terkini, termasuk tindakan yang sudah dilakukan dan kondisi jaringan saat ini.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <strong>Ubah status jika diperlukan</strong>
+            <span>Jika tim lapangan sudah mulai menangani, ubah status dari <span class="badge badge-red">OPEN</span> menjadi <span class="badge badge-yellow">ON PROGRESS</span>.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <strong>Simpan update</strong>
+            <span>Klik <strong>Simpan</strong>. Catatan akan tersimpan beserta timestamp otomatis dan nama user yang melakukan update.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout info">
+        <span class="callout-icon">💡</span>
+        <span>Update tiket minimal setiap <strong>30 menit</strong> selama gangguan aktif, agar tim manajemen dan NOC lain dapat memantau perkembangan penanganan secara real-time.</span>
+      </div>
+    </div>
+
+    <hr class="page-divider"/>
+
+    <!-- ── PANDUAN: TUTUP TIKET ── -->
+    <div class="content-section">
+      <h3>✅ Cara Menutup Tiket (Close Tiket)</h3>
+      <p>Tutup tiket hanya jika gangguan sudah <strong>sepenuhnya teratasi</strong> dan jaringan sudah kembali normal:</p>
+
+      <ol class="step-list">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Verifikasi jaringan sudah normal</strong>
+            <span>Pastikan link sudah UP, ping normal, dan tidak ada laporan gangguan lanjutan dari client sebelum menutup tiket.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Buka detail tiket</strong>
+            <span>Klik tiket yang akan ditutup dari daftar tiket aktif.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Klik tombol "Tutup Tiket" / "Close"</strong>
+            <span>Tombol ini berada di area bawah atau pojok kanan halaman detail tiket.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <strong>Isi catatan resolusi</strong>
+            <span>Wajib mengisi ringkasan penanganan dan penyebab gangguan (root cause) sebelum tiket bisa ditutup.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <strong>Isi waktu selesai</strong>
+            <span>Masukkan tanggal dan jam jaringan kembali normal secara tepat, karena ini digunakan untuk kalkulasi durasi downtime.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <strong>Konfirmasi & simpan</strong>
+            <span>Klik <strong>Konfirmasi Tutup Tiket</strong>. Status berubah menjadi <span class="badge badge-green">CLOSED</span> dan tiket tidak dapat diedit kembali.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout danger">
+        <span class="callout-icon">🚫</span>
+        <span><strong>Perhatian:</strong> Tiket yang sudah ditutup (<span class="badge badge-green">CLOSED</span>) tidak dapat dibuka kembali. Pastikan semua catatan sudah lengkap sebelum menutup tiket.</span>
+      </div>
+    </div>
+
+    <hr class="page-divider"/>
+
+    <!-- ── ALUR LENGKAP ── -->
+    <div class="content-section">
+      <h3>Alur Lengkap Penanganan Insiden Backbone</h3>
+      <table class="data-table">
+        <thead>
+          <tr><th>Tahap</th><th>Aksi</th><th>Penanggung Jawab</th><th>Status Tiket</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Deteksi</strong></td>
+            <td>Gangguan terdeteksi via monitoring (Zabbix, MRTG, laporan client)</td>
+            <td>NOC Shift</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><strong>2. Pencatatan</strong></td>
+            <td>Buat tiket baru di Report Backbone NOC</td>
+            <td>NOC Shift</td>
+            <td><span class="badge badge-red">OPEN</span></td>
+          </tr>
+          <tr>
+            <td><strong>3. Eskalasi</strong></td>
+            <td>Broadcast notifikasi ke tim terkait, koordinasi dengan tim lapangan</td>
+            <td>NOC Shift / Leader</td>
+            <td><span class="badge badge-red">OPEN</span></td>
+          </tr>
+          <tr>
+            <td><strong>4. Penanganan</strong></td>
+            <td>Tim lapangan/remote mulai menangani, update tiket setiap 30 menit</td>
+            <td>Tim Teknis / NOC</td>
+            <td><span class="badge badge-yellow">ON PROGRESS</span></td>
+          </tr>
+          <tr>
+            <td><strong>5. Verifikasi</strong></td>
+            <td>Cek jaringan kembali normal, konfirmasi ke client jika perlu</td>
+            <td>NOC Shift</td>
+            <td><span class="badge badge-yellow">ON PROGRESS</span></td>
+          </tr>
+          <tr>
+            <td><strong>6. Penutupan</strong></td>
+            <td>Tutup tiket dengan catatan resolusi dan waktu selesai</td>
+            <td>NOC Shift / Leader</td>
+            <td><span class="badge badge-green">CLOSED</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── TIPS ── -->
+    <div class="content-section">
+      <h3>Tips & Catatan Penting</h3>
+      <div class="callout info">
+        <span class="callout-icon">📌</span>
+        <span><strong>Penomoran Tiket Otomatis</strong> — Sistem memberi nomor tiket secara otomatis berurutan. Gunakan nomor ini saat berkomunikasi dengan tim lain atau manajemen.</span>
+      </div>
+      <div class="callout warning">
+        <span class="callout-icon">⏱️</span>
+        <span><strong>Waktu Akurasi</strong> — Selalu catat waktu gangguan dengan akurat (jam:menit). Kesalahan waktu akan mempengaruhi kalkulasi SLA dan laporan bulanan.</span>
+      </div>
+      <div class="callout success">
+        <span class="callout-icon">📊</span>
+        <span><strong>Laporan Bulanan</strong> — Data tiket secara otomatis digunakan untuk mengisi laporan insiden bulanan. Semakin lengkap catatan tiket, semakin akurat laporan yang dihasilkan.</span>
+      </div>
+      <div class="callout info">
+        <span class="callout-icon">🔗</span>
+        <span><strong>Integrasi Dashboard</strong> — Jumlah tiket <span class="badge badge-red">OPEN</span> aktif akan tampil di kartu <strong>Insiden Backbone</strong> pada halaman Dashboard dan dapat dilihat oleh seluruh user yang login.</span>
+      </div>
+    </div>
+
+  </div><!-- /.chapter-page -->
+
+</div><!-- /.page -->
+</body>
+</html>

@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { X, Zap, Info, ClipboardList, Megaphone, User, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as indonesia } from 'date-fns/locale';
+import type { Role } from '@/lib/permissions';
 
 // ── Types ────────────────────────────────────────────────────────
 interface Broadcast {
@@ -13,6 +14,7 @@ interface Broadcast {
   message: string;
   sender: string;
   created_at: string;
+  target_roles?: string[] | null;
 }
 
 // ── Constants ────────────────────────────────────────────────────
@@ -190,15 +192,46 @@ function BroadcastPopup({ broadcast, onClose }: { broadcast: Broadcast; onClose:
 
 // ── Main Component ───────────────────────────────────────────────
 export default function BroadcastTicker() {
-  const [broadcast, setBroadcast]     = useState<Broadcast | null>(null);
+  const [broadcast, setBroadcast]         = useState<Broadcast | null>(null);
   const [tickerVisible, setTickerVisible] = useState(false);
-  const [showPopup, setShowPopup]     = useState(false);
-  const [dismissed, setDismissed]     = useState<number | null>(null);
+  const [showPopup, setShowPopup]         = useState(false);
+  const [dismissed, setDismissed]         = useState<number | null>(null);
+
+  // Role state — ref keeps it accessible in realtime callbacks
+  const userRoleRef = useRef<Role | null>(null);
 
   const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.NEXT_PUBLIC_SUPABASE_URL     || '',
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
   );
+
+  // ── Fetch current user's role ──────────────────────────
+  useEffect(() => {
+    async function loadRole() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      if (profile?.role) {
+        userRoleRef.current = profile.role as Role;
+      }
+    }
+    loadRole();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Helper: is this broadcast meant for me? ────────────
+  const isTargetedToMe = useCallback((bc: Broadcast): boolean => {
+    const roles = bc.target_roles ?? null;
+    if (!roles || roles.length === 0) return true;   // null → everyone
+    const role = userRoleRef.current;
+    if (!role) return false;
+    if (role === 'SUPER_DEV') return true;            // always sees all
+    return roles.includes(role);
+  }, []);
 
   // Cek apakah perlu show popup (login baru atau sudah > 1 jam)
   const shouldShowPopup = useCallback((bc: Broadcast): boolean => {
@@ -236,7 +269,7 @@ export default function BroadcastTicker() {
         .limit(1)
         .single();
 
-      if (data) {
+      if (data && isTargetedToMe(data)) {
         setBroadcast(data);
         setTickerVisible(true);
 
@@ -264,6 +297,8 @@ export default function BroadcastTicker() {
         { event: 'INSERT', schema: 'public', table: 'Broadcasts' },
         (payload) => {
           const newBc = payload.new as Broadcast;
+          // Skip jika bukan untuk role ini
+          if (!isTargetedToMe(newBc)) return;
           // Hanya ganti ticker jika broadcast lama sudah expired (>= 24 jam)
           setBroadcast(prev => {
             if (prev) {
@@ -291,6 +326,8 @@ export default function BroadcastTicker() {
       supabase.removeChannel(channel);
       clearInterval(hourlyTimer);
     };
+  // isTargetedToMe stabil (useCallback + useRef) — tidak perlu di deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldShowPopup, openPopup]);
 
   const handleDismissTicker = () => {

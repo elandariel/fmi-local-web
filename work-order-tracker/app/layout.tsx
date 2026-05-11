@@ -11,7 +11,7 @@ import { hasAccess, PERMISSIONS, Role, can, PermissionKey } from '@/lib/permissi
 import {
   LayoutDashboard, Users, Activity, LineChart, Server,
   History, Menu, LogOut, ClipboardList, Wrench, Megaphone,
-  ShieldCheck, ShieldAlert, X, ChevronRight, Network, Sliders
+  ShieldCheck, ShieldAlert, X, ChevronRight, Network, Sliders, Headphones
 } from 'lucide-react';
 
 import GlobalBroadcast from '@/components/GlobalBroadcast';
@@ -331,6 +331,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/work-orders" icon={<ClipboardList size={16} />}   label="Monthly Report Aktivator" />
                 <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/tracker"     icon={<LineChart size={16} />}       label="Weekly Report Aktivator" />
                 <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/NOC/report"  icon={<Network size={16} />}         label="Backbone Report NOC" />
+                <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/CS/report"   icon={<Headphones size={16} />}      label="CS Report" />
 
                 <NavSection label="Database" collapsed={collapsed} />
                 <SidebarItem collapsed={collapsed} onClick={closeSidebarOnMobile} href="/vlan"         icon={<Server size={16} />}    label="VLAN Database" />

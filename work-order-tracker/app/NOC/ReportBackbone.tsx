@@ -2716,6 +2716,18 @@ export default function ReportBackbone() {
   // Track per-session alerts agar tidak spam (key = popKode_downN)
   const kakiAlertSentRef = useRef<Set<string>>(new Set());
 
+  // ── Stale Ticket Alert state ──────────────────────────────────
+  // Data stale diambil dari inactiveAlerts (sudah dihitung dari Problem & Action Timeline / Start Time)
+  // Tidak perlu query DB atau kolom updated_at
+  const [showStalePopup,   setShowStalePopup]   = useState(false);
+  const [staleSentAt,      setStaleSentAt]      = useState<Date | null>(null);
+  const [staleSending,     setStaleSending]     = useState(false);
+  // Ref untuk track kapan terakhir kali kita kirim — hindari spam
+  const staleLastSentRef = useRef<number>(0);
+  // Ref mirror groupedReports agar bisa diakses di useCallback tanpa masuk deps array
+  // (groupedReports sendiri baru di-declare di bawah via useMemo — ini hindari TDZ)
+  const groupedReportsRef = useRef<Record<string, any[]>>({});
+
   // ── Current user role + permissions (for backbone.approve_kode gate) ──
   const [currentUserRole,      setCurrentUserRole]      = useState<string | null>(null);
   const [currentUserOverrides, setCurrentUserOverrides] = useState<Record<string,boolean> | null>(null);
@@ -3267,6 +3279,69 @@ export default function ReportBackbone() {
       }).catch(err => console.warn("[notif-sisa-kaki]", err));
     });
   }, [popKakiStatus]);
+
+  // ── Stale Ticket Alert: kirim ke Telegram Bot 1 pakai data inactiveAlerts ──
+  // inactiveAlerts sudah berisi tiket OPEN/ON PROGRESS/PENDING dengan diffMin >= 30
+  // kita filter yang >= 60 menit (1 jam) untuk dikirim ke Telegram
+  const runStaleCheck = React.useCallback(async (force = false) => {
+    const staleOnes = inactiveAlerts.filter(a => a.diffMin >= 60 && !a.exempt);
+    if (staleOnes.length === 0) return;
+
+    // Jangan spam: kirim maks 1x per jam (kecuali force = true dari tombol manual)
+    const now = Date.now();
+    const HOUR_MS = 60 * 60 * 1000;
+    if (!force && now - staleLastSentRef.current < HOUR_MS) return;
+
+    try {
+      setStaleSending(true);
+
+      // Ambil data subjek dari groupedReportsRef (ref — tidak masuk deps, hindari TDZ)
+      const tickets = staleOnes.map(a => {
+        const group = groupedReportsRef.current[a.ticketNo];
+        const first = group?.[0];
+        return {
+          ticketNo: a.ticketNo,
+          subject:  first?.["Subject Ticket / Email"] || "—",
+          status:   a.status,
+          diffMin:  a.diffMin,
+        };
+      });
+
+      const res  = await fetch("/api/backbone/stale-alert", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ tickets }),
+      });
+      const data = await res.json();
+
+      if (data.sent) {
+        staleLastSentRef.current = now;
+        setStaleSentAt(new Date());
+      }
+
+      // Selalu tampilkan popup kalau ada stale tickets
+      setShowStalePopup(true);
+    } catch (err) {
+      console.warn("[stale-alert]", err);
+    } finally {
+      setStaleSending(false);
+    }
+  // groupedReports sengaja tidak masuk deps — diakses via groupedReportsRef.current
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inactiveAlerts]);
+
+  // Jalankan setiap kali inactiveAlerts berubah — effect ini sudah jalan tiap menit
+  // karena checkInactivity dipanggil tiap 60 detik
+  useEffect(() => {
+    const staleOnes = inactiveAlerts.filter(a => a.diffMin >= 60 && !a.exempt);
+    if (staleOnes.length > 0) {
+      // Auto-tampilkan popup
+      setShowStalePopup(true);
+      // Auto-kirim ke Telegram (throttled: maks 1x/jam)
+      runStaleCheck(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inactiveAlerts]);
 
   // ── Link helpers ──
   const addLink    = () => setLinkRows(p => [...p, { ...EMPTY_LINK }]);
@@ -4044,6 +4119,9 @@ export default function ReportBackbone() {
 
   const allGroups = useMemo(() => Object.entries(groupedReports), [groupedReports]);
 
+  // Sync ref setiap kali groupedReports berubah (dipakai runStaleCheck tanpa masuk deps)
+  useEffect(() => { groupedReportsRef.current = groupedReports; }, [groupedReports]);
+
   const filteredGroups = useMemo(() => {
     const result = allGroups.filter(([ticketNo, group]) => {
       if (search) {
@@ -4127,6 +4205,114 @@ export default function ReportBackbone() {
   <ThemeCtx.Provider value={theme}>
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: C.base, fontFamily: "var(--font-sans)", transition: "background 0.3s ease" }}>
 
+      {/* ══ STALE TICKET POPUP (fixed floating — bottom-right) ══ */}
+      {(() => {
+        const staleOnes = inactiveAlerts.filter(a => a.diffMin >= 60 && !a.exempt);
+        if (!showStalePopup || staleOnes.length === 0) return null;
+        return (
+          <div
+            className="fixed bottom-5 right-5 z-[9990] w-[380px] max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl overflow-hidden"
+            style={{
+              background: C.surface,
+              border: `1px solid rgba(234,179,8,0.35)`,
+              boxShadow: `0 0 0 1px rgba(234,179,8,0.15), 0 20px 60px rgba(0,0,0,0.35)`,
+              animation: "popup-in 0.25s ease-out",
+            }}
+          >
+            {/* Accent strip */}
+            <div className="h-1 w-full" style={{ background: "linear-gradient(to right,#f59e0b,#eab308)" }} />
+
+            {/* Header */}
+            <div className="flex items-center gap-2.5 px-4 py-3" style={{ borderBottom: `1px solid ${C.border}` }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: "rgba(234,179,8,0.15)", border: "1px solid rgba(234,179,8,0.3)" }}>
+                <span className="text-base">⏰</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-black tracking-wide" style={{ color: "#eab308" }}>STALE TICKET ALERT</p>
+                <p className="text-[10px]" style={{ color: C.textMuted }}>
+                  {staleOnes.length} tiket tidak ada update &gt; 1 jam
+                </p>
+              </div>
+              <button
+                onClick={() => setShowStalePopup(false)}
+                className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                style={{ color: C.textMuted, background: "transparent" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = C.elevated; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Ticket list */}
+            <div className="overflow-y-auto custom-scrollbar" style={{ maxHeight: 280 }}>
+              {staleOnes.sort((a, b) => b.diffMin - a.diffMin).map((al, i) => {
+                const group = groupedReports[al.ticketNo];
+                const first = group?.[0];
+                const subject = first?.["Subject Ticket / Email"] || "—";
+                const statusColor = al.status === "ON PROGRESS" ? "#f59e0b" : "#94a3b8";
+                const h = Math.floor(al.diffMin / 60);
+                const m = al.diffMin % 60;
+                const durStr = h > 0 ? `${h}j ${m}m` : `${m}m`;
+                return (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 px-4 py-2.5"
+                    style={{ borderBottom: `1px solid ${C.border}` }}
+                  >
+                    <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full mt-1.5" style={{ background: statusColor }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-black font-mono truncate" style={{ color: C.text }}>
+                        {al.ticketNo}
+                      </p>
+                      <p className="text-[10px] truncate mt-0.5" style={{ color: C.textSec }}>
+                        {subject}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md"
+                          style={{ background: `${statusColor}20`, color: statusColor }}>
+                          {al.status}
+                        </span>
+                        <span className="text-[9px]" style={{ color: C.textMuted }}>
+                          ⏱ {durStr} tanpa update
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-4 py-2.5" style={{ background: C.elevated }}>
+              {staleSentAt ? (
+                <span className="text-[10px] font-semibold" style={{ color: "#22c55e" }}>
+                  ✓ Terkirim ke Telegram {staleSentAt.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              ) : (
+                <span className="text-[10px]" style={{ color: C.textMuted }}>Auto kirim tiap jam</span>
+              )}
+              <button
+                onClick={() => runStaleCheck(true)}
+                disabled={staleSending}
+                className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+                style={{ background: "rgba(234,179,8,0.15)", color: "#eab308", border: "1px solid rgba(234,179,8,0.3)" }}
+              >
+                {staleSending ? "Mengirim..." : "Kirim Ulang"}
+              </button>
+            </div>
+
+            <style>{`
+              @keyframes popup-in {
+                from { opacity: 0; transform: translateY(12px) scale(0.97); }
+                to   { opacity: 1; transform: translateY(0)     scale(1); }
+              }
+            `}</style>
+          </div>
+        );
+      })()}
+
       {/* ══ TOP BAR ══ */}
       <header className="flex items-center gap-2 px-5 py-3 flex-shrink-0"
               style={{ borderBottom: `1px solid ${C.border}`, background: C.base }}>
@@ -4204,6 +4390,36 @@ export default function ReportBackbone() {
             title="Kalender Frekuensi Insiden">
             <Activity size={12} /> <span className="hidden sm:inline">Kalender</span>
           </button>
+
+          {/* Stale Alert button — badge merah kalau ada tiket ≥ 1 jam tanpa update */}
+          {(() => {
+            const staleCount = inactiveAlerts.filter(a => a.diffMin >= 60 && !a.exempt).length;
+            return (
+              <button
+                onClick={() => {
+                  if (staleCount > 0) setShowStalePopup(p => !p);
+                  else runStaleCheck(true);
+                }}
+                disabled={staleSending}
+                title={staleCount > 0 ? `${staleCount} tiket > 1 jam tanpa update` : "Semua tiket up-to-date"}
+                className="relative flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all disabled:opacity-50"
+                style={{
+                  background: staleCount > 0 ? "rgba(234,179,8,0.12)" : C.surface,
+                  border: `1px solid ${staleCount > 0 ? "rgba(234,179,8,0.4)" : C.border}`,
+                  color: staleCount > 0 ? "#eab308" : C.textSec,
+                }}
+              >
+                <span>⏰</span>
+                <span className="hidden sm:inline">{staleSending ? "..." : "Stale"}</span>
+                {staleCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center"
+                    style={{ background: "#ef4444", color: "#fff" }}>
+                    {staleCount}
+                  </span>
+                )}
+              </button>
+            );
+          })()}
         </div>
 
         {/* Spacer */}
